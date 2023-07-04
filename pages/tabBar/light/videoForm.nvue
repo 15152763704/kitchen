@@ -1,0 +1,325 @@
+<template>
+	<view class="evaluate" :style="{'height': phoneHeight}">
+		<view class="">
+			<view class="evaluate-cont">
+				<text class="ec-title">标题：</text>
+				<uni-easyinput :styles="styles" type="text" v-model="showCookingForm.videoName" placeholder="请输入标题"
+					:maxlength="200" />
+			</view>
+			<view class="evaluate-cont">
+				<text class="ec-title">描述：</text>
+				<uni-easyinput :styles="styles" type="textarea" v-model="showCookingForm.videoDescription"
+					placeholder="请输入描述" :maxlength="200" style="height: 300rpx;" />
+			</view>
+			<view class="evaluate-cont" v-if="shopRes.id">
+				<text class="ec-title">关联我的店铺：</text>
+				<view style="height: 100rpx; display: flex; flex-direction: row; align-items:center;">
+					<checkbox :value="shopRes.id" :checked="ischecked"></checkbox>
+					<text class="gdx_"
+						style="height: 60rpx; line-height: 60rpx; color: #56575B; background-color: #F6F7F8; font-size: 28rpx; box-sizing: border-box; display: inline-block; border-radius: 14px;">{{shopRes.name}}</text>
+				</view>
+			</view>
+
+			<!-- 视频 -->
+			<view class="grid col-4 grid-square flex-sub" style="display: flex; flex-direction: row;">
+				<view class="bg-img" v-if="showCookingForm.videoUrl">
+					<video :src="showCookingForm.videoUrl" class="video" :autoplay="true" :show-play-btn="true"
+						:show-center-play-btn="false" :controls="true" :show-progress="false"></video>
+					<cover-image class="bg-red" v-if="showCookingForm.videoUrl" @click="delectVideo()"
+						style="z-index: 999;position: absolute; top: 0; right: 0; width: 30rpx; height: 30rpx;"
+						src="/static/baskCooking/sy_close.png">
+						<!-- <text class='iconfont icon-shanchu'></text> -->
+					</cover-image>
+				</view>
+				<view v-else
+					style="width: 250rpx;height: 250rpx;display: flex; text-align: center;border: 1px dashed #d7d7d7; justify-content: center; align-items: center;"
+					@click="chooseVideo()">
+					<image src="../../../static/shopCar/pay_add.png" style="width: 60rpx; height: 60rpx;">
+					</image>
+				</view>
+			</view>
+		</view>
+		<view class="submit" @click="submit()" v-if="true">
+			<text style="text-align: center; font-size: 32rpx;">发 布</text>
+		</view>
+		<!-- <view class="submit" v-if="!showCookingForm.videoUrl"
+			style="background: linear-gradient(to right, #d1d1d1, #d1d1d1);">
+			<text style="text-align: center; font-size: 32rpx;">发 布</text>
+		</view> -->
+		<view v-if="isLoading" :style="{'height': phoneHeight}"
+			style="background-color: rgb(255,255,255, 0.4);width: 750rpx;position: absolute;top: 0;left: 0;">
+			<image style="width: 288rpx; margin-left: 231rpx;" :style="{'margin-top': phoneHeight/3}"
+				src="../../../static/loading1.gif" mode="widthFix"></image>
+		</view>
+	</view>
+</template>
+
+<script>
+	import showCooking from '@/api/showCooking/showCooking.js'
+	import shop from '@/api/shop/shop.js';
+	import * as util from '@/common/util.js'
+	var returnIP = util.returnIP;
+
+	export default {
+		components: {},
+		data() {
+			return {
+				isLoading: false, //加载中
+
+				shopRes: {
+					id: '',
+					name: ''
+				},
+				ischecked: false,
+
+				phoneHeight: null,
+				from: 0, // 1 tabbar订单 2 订座我的预约
+				showCookingForm: {
+					videoName: '',
+					videoDescription: '',
+					videoUrl: '',
+				},
+				picsArr: [],
+				picsUrlArr: [],
+				styles: {
+					borderColor: '#F8F8F8'
+				},
+				imgList: [],
+
+
+				src: "", //视频存放
+				sourceTypeIndex: 2,
+				checkedValue: true,
+				checkedIndex: 0,
+				sourceType: ['拍摄', '相册', '拍摄或相册'],
+				cameraList: [{
+						value: 'back',
+						name: '后置摄像头',
+						checked: 'true'
+					},
+					{
+						value: 'front',
+						name: '前置摄像头'
+					},
+				],
+				cameraIndex: 0,
+			}
+		},
+		onLoad: function(option) {
+			uni.getSystemInfo({
+				success: (res) => { // 需要使用箭头函数，swiper 高度才能设置成功
+					// 获取swiperHeight可以获取的高度，窗口高度减去导航栏高度
+					this.phoneHeight = res.windowHeight;
+					console.log(this.phoneHeight);
+				}
+			});
+			if (option.from == 1) {
+				this.showCookingForm.orderId = option.orderId;
+			} else {
+				this.showCookingForm.orderId = option.id;
+			}
+			this.from = option.from;
+			this.findMyShop()
+		},
+		methods: {
+			findMyShop() {
+				//uni.getStorageSync('userInfo_key').userId
+				shop.getShopDetails('').then(res => {
+					// console.log(res.data)
+					if (res.data) {
+						this.shopRes = res.data
+					} else {
+						console.log('没有data')
+					}
+
+
+				})
+			},
+			chooseVideo() {
+				// 上传视频
+				uni.chooseVideo({
+					maxDuration: 60,
+					compressed: false, //是否压缩所选的视频源文件，默认值为 true，需要压缩。
+					count: 1,
+					camera: this.cameraList[this.cameraIndex].value,
+					sourceType: ['album', 'camera'], //album 从相册选视频，camera 使用相机拍摄，默认为：['album', 'camera']
+					success: (responent) => {
+						let videoFile = responent.tempFilePath;
+						this.isLoading = true
+						console.log(videoFile);
+						uni.uploadFile({
+							url: returnIP() + 'file/uploadKitchen', //仅为示例，非真实的接口地址
+							method: "POST",
+							header: {
+								Authorization: 'Bearer ' + uni.getStorageSync('token_key'),
+							},
+							filePath: videoFile,
+							name: 'file',
+							formData: {
+								'fieldName': 'videoId',
+								'tableName': 'show_cooking'
+							},
+							success: (uploadFileRes) => {
+								this.isLoading = false
+								this.showCookingForm.videoId = JSON.parse(uploadFileRes.data).data
+									.fileId
+								this.showCookingForm.videoUrl = JSON.parse(uploadFileRes.data).data
+									.url
+								this.showCookingForm.videoCutImageUrl = JSON.parse(uploadFileRes
+										.data).data
+									.videoCutImageUrl
+
+								console.log(this.showCookingForm)
+							}
+						})
+						// let percentIntval = setInterval(function(){
+						// 	showCooking.findPercent().then(res=>{
+						// 		console.log(res)
+						// 	})
+						// },100)
+					}
+				})
+			},
+			delectVideo() {
+				uni.showModal({
+					title: "提示",
+					content: "是否要删除此视频",
+					success: (res) => {
+						if (res.confirm) {
+							this.showCookingForm.videoUrl = ''
+						}
+					}
+				})
+			},
+			submit() {
+				if(!this.showCookingForm.videoUrl) {
+					uni.showToast({
+						title: "请上传视频",
+						icon: 'none'
+					})
+					return;
+				}
+				if (this.ischecked) {
+					this.showCookingForm.linkUrl = this.shopRes.id
+					this.showCookingForm.linkName = this.shopRes.name
+				}
+				showCooking.addVideo(this.showCookingForm).then(res => {
+					if (res.code == 200) {
+						uni.showToast({
+							title: "发布成功",
+							icon: 'success'
+						})
+						setTimeout(function() {
+							uni.navigateBack()
+						}, 1000);
+					}
+				}).catch(err => {
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					})
+				});
+			},
+		},
+		onPageScroll(e) {
+			this.scrollTop = e.scrollTop;
+
+		},
+	}
+</script>
+
+<style>
+	/* .evaluate .uni-easyinput__content-textarea {
+		background-color: #F8F8F8 !important;
+
+	} */
+</style>
+<style scoped>
+	.video {
+		width: 400rpx;
+		height: 250rpx;
+	}
+
+	.evaluate {
+		background-color: #FFFFFF;
+		width: 750rpx;
+		height: 100vh;
+		box-sizing: border-box;
+		padding-top: 42rpx;
+		padding-left: 30rpx;
+		padding-right: 30rpx;
+	}
+
+
+	.evaluate-cont {
+		margin-bottom: 42rpx;
+
+
+	}
+
+	.ec-title {
+		font-size: 32rpx;
+		margin-bottom: 8rpx;
+	}
+
+	.evaluate-pic {
+		width: 100rpx;
+		height: 100rpx;
+		border: 1rpx dashed #BABABA;
+		background-color: #FFFFFF;
+		border-radius: 8rpx;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.submit {
+		width: 690rpx;
+		height: 78rpx;
+		/* line-height: 78rpx; */
+		/* text-align: center; */
+		background: linear-gradient(to right, #F0C819, #FF9D00);
+		border-radius: 42rpx;
+		font-size: 32rpx;
+		font-weight: 500;
+		position: fixed;
+		bottom: 88rpx;
+		left: 30rpx;
+		align-items: center;
+		flex-direction: row;
+		justify-content: center;
+		/* margin-top: 400rpx; */
+	}
+
+	.grid.grid-square .cu-tag {
+		position: absolute;
+		left: 400rpx;
+		top: 0;
+		border-bottom-left-radius: 6upx;
+		padding: 6upx 12upx;
+		height: auto;
+	}
+
+	.cu-tag {
+		font-size: 24upx;
+		vertical-align: middle;
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+		padding: 0upx 16upx;
+		height: 48upx;
+		font-family: Helvetica Neue, Helvetica, sans-serif;
+		white-space: nowrap;
+	}
+
+	.bg-red {
+		background-color: #fff;
+		color: #ffffff;
+	}
+
+	.gdx_ {
+		padding: 0 24rpx;
+	}
+</style>

@@ -1,0 +1,177 @@
+<template>
+	<view class="v-info" id="vInfo" style="">
+		<view class="advertise" @click="clickGwc(showCookingData.linkUrl)">
+			<image style="width: 32rpx; margin-right: 22rpx; margin-left: 14rpx;" src="/static/baskCooking/sy_gouwuche.png"
+				mode="widthFix"></image>
+			<text class="advertise-text">{{showCookingData.linkName}}</text>
+			<text class="advertise-text" style="margin: 0 12rpx;">|</text>
+			<text class="advertise-text">视频同款美食</text>
+		</view>
+		<view class="info-header">
+			<image style="width: 74rpx; margin-right: 18rpx;" :src="showCookingData.userUrl?showCookingData.userUrl:'/static/danxiaochu.png'" mode="widthFix"></image>
+			<text class="info-title">{{showCookingData.userName}}</text>
+			<view class="info-gz" @click="clickGz()" v-if="!isFollowed">
+				<image style="width: 18rpx;" src="../../../static/baskCooking/xq_guanzhu.png" mode="widthFix"></image>
+				<text class="info-gz-text">关注</text>
+			</view>
+			<view class="info-gz" @click="clickCancelGz()" v-if="isFollowed">
+				<text class="info-gz-text">已关注</text>
+			</view>
+		</view>
+		<text class="info-introduce">{{showCookingData.videoDescription}}~</text>
+		<text class="info-time">{{parseTime(showCookingData.createTime)}}</text>
+	</view>
+</template>
+
+<script>
+	import showCooking from '@/api/showCooking/showCooking.js';
+	
+	export default {
+		data() {
+			return {
+				showCookingData:{},
+				isFollowed: true ,
+			}
+		},
+		methods: {
+			/* 查询我是否关注当前用户 */
+			initFindIsFollowerUser(){
+				showCooking.findIsFollowUser({userId:this.showCookingData.userId}).then((res)=>{
+					this.isFollowed = res.data
+				})
+			},
+			/* 关注 */
+			clickGz() {
+				showCooking.ShowCookingFollow({
+					followedId:this.showCookingData.userId,
+					followedName:this.showCookingData.userName,
+					followedAvatar:this.showCookingData.userUrl,
+				}).then((res)=>{
+					if(res.code == 200) this.isFollowed = true
+				})
+			},
+			/* 取消关注 */
+			clickCancelGz(){
+				showCooking.cancelFollow({userId:this.showCookingData.userId}).then((res)=>{
+					console.log(res)
+					if(res.code == 200) this.isFollowed = false
+				})
+			},
+			clickGwc(id) {
+				uni.navigateTo({
+					url: '/pages/store/store?id=' + id
+				});
+			},
+			
+			
+			parseTime(time, pattern) {
+			  if (arguments.length === 0 || !time) {
+			    return null
+			  }
+			  const format = pattern || '{y}-{m}-{d} {h}:{i}:{s}'
+			  let date
+			  if (typeof time === 'object') {
+			    date = time
+			  } else {
+			    if ((typeof time === 'string') && (/^[0-9]+$/.test(time))) {
+			      time = parseInt(time)
+			    } else if (typeof time === 'string') {
+			      time = time.replace(new RegExp(/-/gm), '/').replace('T', ' ').replace(new RegExp(/\.[\d]{3}/gm), '');
+			    }
+			    if ((typeof time === 'number') && (time.toString().length === 10)) {
+			      time = time * 1000
+			    }
+			    date = new Date(time)
+			  }
+			  const formatObj = {
+			    y: date.getFullYear(),
+			    m: date.getMonth() + 1,
+			    d: date.getDate(),
+			    h: date.getHours(),
+			    i: date.getMinutes(),
+			    s: date.getSeconds(),
+			    a: date.getDay()
+			  }
+			  const time_str = format.replace(/{(y|m|d|h|i|s|a)+}/g, (result, key) => {
+			    let value = formatObj[key]
+			    // Note: getDay() returns 0 on Sunday
+			    if (key === 'a') { return ['日', '一', '二', '三', '四', '五', '六'][value] }
+			    if (result.length > 0 && value < 10) {
+			      value = '0' + value
+			    }
+			    return value || 0
+			  })
+			  return time_str
+			},
+			
+		},
+		onLoad() {
+			let that = this ;
+			uni.$once('vInfoEmitData',function(data){
+				that.showCookingData = data
+				that.initFindIsFollowerUser()
+				console.log(data)
+			})
+		}
+	}
+</script>
+
+<style scoped>
+	.v-info {
+		/* background-color: #0000FF; */
+		justify-content: flex-end;
+	}
+	.info-introduce {
+		font-size: 28rpx;
+		color: #FFFFFF;
+		margin-bottom: 2rpx;
+		margin-top: 20rpx;
+		height: 36px;
+		line-height: 18px;
+		overflow: hidden;
+	}
+	.info-time {
+		font-size: 20rpx;
+		color: #FFFFFF;
+	}
+	.info-gz {
+		width: 102rpx;
+		background: linear-gradient(to right, #F0C819, #FF9D00);
+		border-radius: 42rpx;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+		margin-left: 8rpx;
+	}
+	.info-title {
+		font-size: 28rpx;
+		font-weight: 500;
+		color: #FFFFFF;
+	}
+	.info-gz-text {
+		font-size: 26rpx;
+		font-weight: 500;
+		color: #FFFFFF;
+		margin-left: 4rpx;
+	}
+	.info-header {
+		flex-direction: row;
+		align-items: center;
+		margin-top: 26rpx;
+	}
+	.advertise {
+		width: 294rpx;
+		height: 46rpx;
+		flex-direction: row;
+		align-items: center;
+		background-color: rgba(0, 0, 0, 0.27450980392156865);
+		border-radius: 10rpx;
+	}
+	
+	.advertise-text {
+		margin-top: 4rpx;
+		font-size: 20rpx;
+		font-weight: 500;
+		color: #FFFFFF;
+	}
+</style>

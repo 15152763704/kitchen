@@ -1,0 +1,116 @@
+[{
+	"name": "热销",
+	"icon": "/static/dpzy_rexiao.png",
+	"list": [
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		},
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		}
+	]
+},
+{
+	"name": "优惠",
+	"icon": "/static/dpzy_youhui.png",
+	"list": [
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		},
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		}
+	]
+},
+{
+	"name": "特色菜系",
+	"list": [
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		},
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		}
+	]
+},
+{
+	"name": "鲜美汤品",
+	"list": [
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		},
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		}
+	]
+},
+{
+	"name": "淮扬小炒",
+	"list": [
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		},
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		},
+		{
+			"image": "/static/dpzy_goodsPic.png",
+			"name": "茶香法式牛排"
+		},
+		{
+			"image": "/static/dpzy_goodsPic2.png",
+			"name": "清炖老母鸡"
+		}
+	]
+}
+]

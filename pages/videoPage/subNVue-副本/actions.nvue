@@ -1,0 +1,118 @@
+<template>
+	<view class="actions" id="actions" style="">
+		<view class="actions_item">
+			<image style="width: 74rpx;" v-if="isZan" src="../../../static/baskCooking/xq_dianzaia.png" mode="widthFix" @click="clickCancelZan()"></image>
+			<image style="width: 74rpx;" v-if="!isZan" src="../../../static/baskCooking/xq_dianzai.png" mode="widthFix" @click="clickZan()"></image>
+			<text class="actions_item_text">{{showCookingData.supportNum}}</text>
+		</view>
+		<view class="actions_item">
+			<image style="width: 74rpx;" v-if="isStar" src="../../../static/baskCooking/xq_stara.png" mode="widthFix" @click="clickCancelStar()"></image>
+			<image style="width: 74rpx;" v-if="!isStar" src="../../../static/baskCooking/xq_star.png" mode="widthFix" @click="clickStar()"></image>
+			<text class="actions_item_text">{{showCookingData.likeNum}}</text>
+		</view>
+		<view class="actions_item">
+			<image style="width: 74rpx;" src="../../../static/baskCooking/xq_info.png" mode="widthFix"
+				@click="clickInfo()"></image>
+			<text class="actions_item_text">{{showCookingData.evaluationNum}}</text>
+		</view>
+		<!-- <view class="actions_item">
+			<image style="width: 74rpx" src="../../../static/baskCooking/xq_export.png" mode="widthFix"></image>
+			<text class="actions_item_text">分享</text>
+		</view> -->
+	</view>
+</template>
+
+<script>
+	import showCooking from '@/api/showCooking/showCooking.js';
+	
+	export default {
+		data() {
+			return {
+				showCookingData:{},
+				isZan: null,
+				isStar: null
+				// isPopup: false
+			}
+		},
+		onLoad() {
+			let that = this ;
+			uni.$once('actionsEmitData',function(data){
+				that.showCookingData = data
+			})
+			setTimeout(function(){
+				that.initfindIsSupportVideo()
+				that.initfindIsLikeVideo()
+			},100)
+		},
+		methods: {
+			/* 查询当前视频我是否收藏 */
+			initfindIsLikeVideo(){
+				showCooking.findIsLikeVideo({id:this.showCookingData.id}).then((res)=>{
+					this.isStar = res.data
+				})
+			},
+			/* 查询当前视频我是否点赞 */
+			initfindIsSupportVideo(){
+				showCooking.findIsSupportVideo({id:this.showCookingData.id}).then((res)=>{
+					this.isZan = res.data
+				})
+			},
+			clickZan() {
+				showCooking.ShowCookingSupport({showCookingId:this.showCookingData.id,supportedUserId:this.showCookingData.userId}).then((res)=>{
+					if(res.code == 200){
+						this.isZan = true
+						this.showCookingData.supportNum++
+					}
+				})
+			},
+			clickCancelZan(){
+				showCooking.cancelSupport({id:this.showCookingData.id}).then((res)=>{
+					if(res.code == 200) {
+						this.isZan = false
+						this.showCookingData.supportNum = this.showCookingData.supportNum>0?this.showCookingData.supportNum-1:0
+					}
+				})
+			},
+			clickStar() {
+				showCooking.ShowCookingMyLike({showCookingId:this.showCookingData.id,likedUserId:this.showCookingData.userId}).then((res)=>{
+					if(res.code == 200) {
+						this.isStar = true
+						this.showCookingData.likeNum++
+					}
+				})
+			},
+			clickCancelStar() {
+				showCooking.cancelLike({id:this.showCookingData.id}).then((res)=>{
+					if(res.code == 200) {
+						this.isStar = false
+						this.showCookingData.likeNum = this.showCookingData.likeNum>0?this.showCookingData.likeNum-1:0
+					}	
+				})
+			},
+			clickInfo() {
+				const popupComment = uni.getSubNVueById('popupComment');
+				uni.$emit('popupComment_showCookingData',this.showCookingData)
+				popupComment.show('slide-in-bottom',200);
+			}
+		},
+		
+	}
+</script>
+
+<style scoped>
+	.actions {
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.actions_item {
+		align-items: center;
+	}
+
+	.actions_item_text {
+		font-size: 26rpx;
+		color: #FFFFFF;
+		font-weight: 500;
+		margin-top: 12rpx;
+	}
+</style>

@@ -1,0 +1,48 @@
+<template>
+	<view class="cmt-input" id="cmtInput" style="background-color: #000;">
+		<!-- <input style="" type="text" placeholder="评论一下~" placeholderStyle="color: #808080; font-size: 14px;"/> -->
+		<!-- <text style="color: #808080; font-size: 28rpx;">评论一下~</text> -->
+		<uni-easyinput type="text" :styles="styles" class="uni_easyinput_color" v-model="ShowCookingEvaluation.content"
+			placeholderStyle="color: #808080; font-size: 24rpx; font-weight: 500" placeholder="说说你的想法吧~"
+			confirm-type="send" @confirm="commentConfirm"></uni-easyinput>
+	</view>
+</template>
+
+<script>
+	import showCooking from '@/api/showCooking/showCooking.js';
+	
+	export default {
+		data() {
+			return {
+				ShowCookingEvaluation:{},
+				styles: {
+					color: '#808080',
+					borderColor: 'transparent'
+				},
+			}
+		},
+		onLoad() {
+			let that = this ;
+			uni.$once('cmtInputEmitData',function(data){
+				that.ShowCookingEvaluation.showCookingId = data.id
+			})
+		},
+		methods: {
+			/* 提交评论 */
+			commentConfirm(){
+				showCooking.addEvaluation(this.ShowCookingEvaluation).then((res)=>{
+					console.log(res)
+					if(res.code == 200)uni.showToast({
+						title:'评论成功'
+					})
+				})
+			},
+		}
+	}
+</script>
+
+<style scoped>
+	.cmt-input {
+		padding: 28rpx 30rpx;
+	}
+</style>

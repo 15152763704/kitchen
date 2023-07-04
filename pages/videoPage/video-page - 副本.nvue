@@ -1,0 +1,173 @@
+<template>
+	<view style="background-color: #000000;">
+		<!-- <swiper class="swiper sv-item" :circular="false" :vertical="true" @change="onSwiperChange" :style="{height: screenHeight}"> -->
+			<!-- <swiper-item class="sv-item" v-for="(item, index) in 6" :key="index" :style="{height: screenHeight}"> -->
+			    <view class="sv-item" :style="{height: screenHeight}">
+			    	<video :style="{height: screenHeight}" :id="showCookingData.id" :direction="0" class="sv-video"
+			    		:src="showCookingData.videoUrl" :controls="false" :show-loading="true" :show-mute-btn="false" :loop="true"
+			    		:autoplay="true" :show-fullscreen-btn="true" :show-play-btn="false" :show-center-play-btn="false"
+			    		@click="changeVideoState" />
+			    	<!-- 内容区域 -->
+			    	<!-- <block style="">
+			    		<operation :itemInfo.sync="videoInfo" />
+			    		<view class="debug">
+			    			<view>{{videoInfo.title}}</view>
+			    			<view>当前视频的id:{{videoInfo._id}}</view>
+			    		</view>
+			    	</block>
+			    
+			    	<image class="sv-play" style="" v-show="!videoState" src="/static/chenmushan-videoSwiper/play.png"
+			    		mode="widthFix" /> -->
+			    </view>
+			    <cover-view style="width: 100rpx; height: 100rpx; position: absolute; top: 80rpx; left: 0;" @click="back()"></cover-view>
+			    <cover-image
+			    	style="width: 18rpx; height: 30rpx; position: absolute; top: 114rpx; left: 30rpx;"
+			    	src="/static/baskCooking/xq_back.png" @click="back()"></cover-image>
+			    <cover-image
+			    	v-if="!videoState"
+			    	style="width: 100rpx; height: 100rpx; position: absolute; top: 680rpx; left: 330rpx;"
+			    	src="/static/baskCooking/play.png"
+			    	@click="changeVideoState"></cover-image>
+			    <!-- <cover-view class="screen"
+			    	style="width: 200rpx; height: 200rpx; position: absolute; bottom: 200rpx; background-color: #FFFFFF;"
+			    	@click="quitFullScreen">
+			    	255
+			    </cover-view> -->
+			<!-- </swiper-item> -->
+		<!-- </swiper> -->
+	</view>
+</template>
+
+<script>
+	// import operation from './components/operation.vue';
+	import showCooking from '@/api/showCooking/showCooking.js';
+
+	export default {
+		components: {
+			// operation
+		},
+		data() {
+			return {
+				dataId: null,
+				// cmtIsShow: false,
+				screenHeight: 0,
+				statusbarH: 0, // 状态栏高度
+				videoState: true, // 当前视频播放的状态
+				// updateView: true, // ios bug
+				showCookingData:{},
+			}
+		},
+		onLoad: function(option) {
+			this.dataId = option.id 
+			const res = wx.getSystemInfoSync()
+			// console.log(res)
+			this.statusbarH = res.statusBarHeight;
+			this.screenHeight = res.screenHeight - 80;
+			this.initShowCookingById(this.dataId)
+		},
+		onShow: function(option) {
+			// #ifdef APP-NVUE
+			const popupComment = uni.getSubNVueById('popupComment');
+			popupComment.hide();
+			
+			const cmtInput = uni.getSubNVueById('cmtInput');
+			cmtInput.show();
+			
+			const vInfo = uni.getSubNVueById('vInfo');
+			vInfo.show();
+			
+			const actions = uni.getSubNVueById('actions');
+			showCooking.getShowCookingById({id:this.dataId}).then((res)=>{
+				uni.$emit("actionsEmitData",res.data)
+				uni.$emit("vInfoEmitData",res.data)
+				uni.$emit("cmtInputEmitData",res.data)
+			})
+			actions.show();
+			// #endif
+		},
+
+		onReady() {
+			// #ifdef APP-NVUE
+
+			// #endif
+		},
+		onUnload() {
+			// uni.$off('comment-popup');
+		},
+		methods: {
+			initShowCookingById(id){
+				showCooking.getShowCookingById({id:id}).then((res)=>{
+					console.log(res)
+					this.showCookingData = res.data
+				})
+			},
+			// 修改当前视频的播放状态
+			changeVideoState(e) {
+				// console.log(this.showCookingData)
+				let video = uni.createVideoContext(this.showCookingData.id, this);
+				this.videoState ? video.pause() : video.play();
+				this.videoState = !this.videoState;
+			},
+			test() {
+
+			},
+			// 返回
+			back() {
+				uni.navigateBack();
+			},
+			// 
+			onSwiperChange() {
+				
+			}
+		}
+	}
+</script>
+
+<style>
+	page {
+		/* background-color: #000; */
+	}
+</style>
+
+<style lang="scss" scoped>
+	// .debug {
+	// 	position: absolute;
+	// 	left: 50rpx;
+	// 	bottom: 100rpx;
+	// 	font-size: 32rpx;
+	// 	color: #fff;
+	// 	// z-index: 999;
+	// }
+
+	.sv-item,
+	.sv-video {
+		// position: absolute;
+		width: 750rpx;
+		/* #ifdef H5 */
+		height: 100vh;
+		/* #endif */
+		left: 0;
+		top: 0;
+		position: relative;
+		z-index: 1;
+	}
+
+	// .sv-play {
+	// 	position: absolute !important;
+	// 	top: 50%;
+	// 	left: 50%;
+	// 	transform: translate(-50%, -50%);
+	// 	opacity: .8;
+	// 	pointer-events: none;
+	// 	width: 100rpx;
+	// }
+
+	// .navbar {
+	// 	position: fixed;
+	// 	top: 0;
+	// 	padding: 0 30rpx;
+	// 	display: flex;
+	// 	align-items: center;
+	// 	z-index: 99;
+	// }
+</style>

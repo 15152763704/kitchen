@@ -1,0 +1,856 @@
+<template>
+	<div class="page" :style="{ height: height }">
+		<swiper :skip-hidden-item-layout="true" class="swiper" :vertical="true" :acceleration="true"
+			@change="changeCurrent" @animationfinish="animationFinish" :current="index">
+			<swiper-item v-for="(item, idx) in videoList" :key="idx" class="swiper-item" style="z-index: 999999;">
+				<!-- 视频渲染数预加载数影响性能 -->
+				<div v-if="Math.abs(index-idx)<=1" class="video-box">
+					<block v-if="item.src">
+						<chunlei-video :index="index" :poster="item.poster" :id="item.id" v-show="!maskShow"
+							:danmuList="danmuList" class="video" :src="item.src" :height="height" :width="width"
+							:play="item.flag" v-if="Math.abs(index-idx)<=1" :gDuration="item.duration" :initialTime="0"
+							@pause="pauseVideo" :objectFit="item.objectFit" @playEnd="playEnd">
+						</chunlei-video>
+						<cover-view @click="clickVideo()"
+							style="width: 750rpx; height: 2000rpx; background: #DD524D; position: absolute; opacity: 0.1;">
+						</cover-view>
+						<cover-view class="cover-view-left">
+							<cover-view class="left-view">
+								<!-- #ifdef APP-PLUS-NVUE -->
+								<text class="left-text">@{{item.at}}</text>
+								<!-- #endif -->
+								<!-- #ifndef APP-PLUS-NVUE -->
+								<cover-view class="left-text">@{{item.at}}</cover-view>
+								<!-- #endif -->
+							</cover-view>
+							<cover-view class="left-view">
+								<!-- #ifdef APP-PLUS-NVUE -->
+								<text class="left-text">{{item.content}}</text>
+								<!-- #endif -->
+								<!-- #ifndef APP-PLUS-NVUE -->
+								<cover-view class="left-text">{{item.content}}</cover-view>
+								<!-- #endif -->
+							</cover-view>
+						</cover-view>
+						<cover-view class="cover-view-right">
+							<cover-image :src="item.avater" class="avater" @click.stop=""></cover-image>
+							<!-- #ifdef APP-PLUS-NVUE -->
+							<text v-if="(item.userId != userInfo.userId) && !item.meIsFollow" class="right-text-avater"
+								@click.stop="tapAvater(item)">+</text>
+							<text class="right-text"></text>
+							<!-- #endif -->
+							<!-- #ifndef APP-PLUS-NVUE -->
+							<cover-view class="right-text-avater">+</cover-view>
+							<cover-view class="right-text"></cover-view>
+							<!-- #endif -->
+
+							<cover-image
+								:src="item.meIsSupport?'../../static/baskCooking/xq_dianzaia.png':'../../static/baskCooking/xq_dianzai.png'"
+								class="img" @click.stop="tapSupport(item)"></cover-image>
+
+							<!-- #ifdef APP-PLUS-NVUE -->
+							<text class="right-text">{{item.supportNum}}</text>
+							<!-- #endif -->
+							<!-- #ifndef APP-PLUS-NVUE -->
+							<cover-view class="right-text">{{item.supportNum}}</cover-view>
+							<!-- #endif -->
+
+							<cover-image
+								:src="item.check?'../../static/baskCooking/xq_stara.png':'../../static/baskCooking/xq_star.png'"
+								class="img" @click.stop="tapLove(item)"></cover-image>
+
+							<!-- #ifdef APP-PLUS-NVUE -->
+							<text class="right-text">{{item.like}}</text>
+							<!-- #endif -->
+							<!-- #ifndef APP-PLUS-NVUE -->
+							<cover-view class="right-text">{{item.like}}</cover-view>
+							<!-- #endif -->
+
+							<cover-image src="../../static/baskCooking/xq_info.png" class="img"
+								@click.stop="tapMsg(item)"></cover-image>
+
+							<!-- #ifdef APP-PLUS-NVUE -->
+							<text class="right-text">{{item.comment}}</text>
+							<!-- #endif -->
+							<!-- #ifndef APP-PLUS-NVUE -->
+							<cover-view class="right-text">{{item.comment}}</cover-view>
+							<!-- #endif -->
+
+							<!-- <cover-image src="../../static/baskCooking/xq_export.png" class="img"
+								@click.stop="tapShare"></cover-image> -->
+							<!-- #ifdef APP-PLUS-NVUE -->
+							<!-- <text class="right-text">分享</text> -->
+							<!-- #endif -->
+							<!-- #ifndef APP-PLUS-NVUE -->
+							<!-- <cover-view class="right-text">分享</cover-view> -->
+							<!-- #endif -->
+
+						</cover-view>
+						<!-- <cover-view style="width: 100vw; height: 100vh; background: #000; position: absolute; opacity: 0.1;"></cover-view> -->
+					</block>
+					<!-- <image src="../../static/baskCooking/logo.png" :style="{ height: height }" v-else  class="video-box"></image> -->
+				</div>
+			</swiper-item>
+		</swiper>
+		<cover-view style="width: 100rpx; height: 100rpx; position: absolute; top: 80rpx; left: 0; padding: 40rpx;"
+			@click="back()">
+			<cover-image style="width: 28rpx; height: 46rpx;" src="/static/baskCooking/xq_back.png" @click.stop="">
+			</cover-image>
+		</cover-view>
+	</div>
+</template>
+<script>
+	import chunleiVideo from '../../components/chunlei-video/chunlei-video'
+	import showCooking from '@/api/showCooking/showCooking.js';
+	export default {
+		components: {
+			chunleiVideo
+		},
+		data() {
+			return {
+				maskShow: true,
+				sysheight: 0,
+				playCount: 2, //剩余多少视频加载视频列表
+				videoList: [
+					// {
+					// 	id: 11,
+					// 	src:'http://baobab.kaiyanapp.com/api/v1/playUrl?vid=164111&resourceType=video&editionType=default&source=aliyun&playUrlType=url_oss',
+					// 	content:'222',
+					// 	flag: true,
+					// 	check: false,
+					// 	like:'7w',
+					// 	comment:'1045',
+					// 	avater:'http://img.kaiyanapp.com/7af2bb1bc134fb1115d48f05e9d317f0.jpeg?imageMogr2/quality/60/format/jpg',
+					// 	initialTime:0,
+					// 	at:'世界美食荟萃',
+					// 	duration:1162
+					// }
+				],
+				height: '667px',
+				index: null,
+				width: '',
+				oldIndex: 0,
+				danmuList: [
+
+				],
+				qParams: {
+					pageNum: null, // 列表页加载的页数
+					videoIndex: null, // 列表页点击的视频index
+					pageSize: null
+				},
+				queryParams: {
+					pageNum: 1,
+					pageSize: 10,
+				},
+				videosTotal: null,
+				userInfo: uni.getStorageSync('userInfo_key')
+			}
+		},
+		created() {
+			//#ifdef APP-PLUS
+			plus.screen.lockOrientation("portrait-primary")
+			//隐藏subnvue
+			uni.getSubNVueById('comment').hide()
+			uni.getSubNVueById('input-box').hide()
+			//#endif
+			this.sysheight = uni.getSystemInfoSync().windowHeight
+			this.height = `${this.sysheight}px`
+			let width = uni.getSystemInfoSync().windowWidth
+			this.width = `${width}px`
+			// this.videoList.length = 5
+			// this.videoList.fill({src:''})
+		},
+		mounted() {
+			//设置id 通过id轮到相应位置
+			// let id = "http://img.kaiyanapp.com/255365dbfc2622930eb0cdb33e43abf0.jpeg?imageMogr2/quality/60/format/jpg"
+			// await this.pushVideoList()
+
+			// this.index = this.videoList.reduce((total,item)=>{
+			// 	if(id==''||id==item.id){
+			// 		id = ''
+			// 	}else{
+			// 		total++
+			// 	}
+			// 	return total
+			// },0)
+			// if(!this.index){
+			// 	this.$nextTick(()=>{
+			// 		this.videoPlay(this.index)
+			// 	})
+			// }
+		},
+		onHide() {
+			for (let item of this.videoList) {
+				item.flag = false
+			}
+		},
+		onLoad(option) {
+			this.userInfo = uni.getStorageSync('userInfo_key')
+			// this.index = 7;
+			this.qParams.pageNum = Number(option.pageNum);
+			this.qParams.pageSize = option.pageNum * option.pageSize;
+			// this.qParams.videoIndex = option.index;
+			this.index = Number(option.index);
+			this.queryParams.pageNum = Number(option.pageNum) + 1;
+			this.queryParams.pageSize = Number(option.pageSize);
+			// setTimeout(() => {
+			// 	this.maskShow = false
+			// }, 1000);
+			if(option.type) {
+				// console.log(option.type)
+				switch (option.type){
+					case '1':
+						this.initMyReleaseVideoList()
+						break;
+					case '2':
+						this.initMySupportVideoList()
+						break;
+					default:
+						this.initMyLikeVideoList()
+						break;
+				}
+			}else {
+				this.initVideoList()
+			}
+			
+		},
+		methods: {
+			// 返回
+			back() {
+				uni.navigateBack();
+			},
+			// 获取视频列表
+			initVideoList() {
+				let data = {
+					pageNum: 1,
+					pageSize: this.qParams.pageSize,
+				}
+				showCooking.listVideo(data).then((res) => {
+					// this.list = this.list.concat(res.rows);
+					this.videosTotal = res.total;
+					console.log(res.rows)
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.like = res.rows[i].likeNum; // 收藏数量
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.check = res.rows[i].meIsLike; // null：不是，'id'：是
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = res.rows[i].videoCutImageUrl;
+
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = arr;
+					// this.$set(this.videoList[this.index], 'flag', true);
+				})
+			},
+			initMyReleaseVideoList() {
+				let data = {
+					pageNum: 1,
+					pageSize: this.qParams.pageSize,
+				}
+				showCooking.myReleaseVideoList(data).then((res) => {
+					// this.list = this.list.concat(res.rows);
+					this.videosTotal = res.total;
+					// console.log(res.rows)
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.like = res.rows[i].likeNum; // 收藏数量
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.check = res.rows[i].meIsLike; // null：不是，'id'：是
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = '';
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = arr;
+				})
+			},
+			initMySupportVideoList() {
+				let data = {
+					pageNum: 1,
+					pageSize: this.qParams.pageSize,
+				}
+				showCooking.mySupportVideoList(data).then((res) => {
+					// this.list = this.list.concat(res.rows);
+					this.videosTotal = res.total;
+					// console.log(res.rows)
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.like = res.rows[i].likeNum; // 收藏数量
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.check = res.rows[i].meIsLike; // null：不是，'id'：是
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = '';
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = arr;
+				})
+			},
+			initMyLikeVideoList() {
+				let data = {
+					pageNum: 1,
+					pageSize: this.qParams.pageSize,
+				}
+				showCooking.myLikeVideoList(data).then((res) => {
+					// this.list = this.list.concat(res.rows);
+					this.videosTotal = res.total;
+					// console.log(res.rows)
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.like = res.rows[i].likeNum; // 收藏数量
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.check = res.rows[i].meIsLike; // null：不是，'id'：是
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = '';
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = arr;
+				})
+			},
+			animationFinish(e) {
+				//#ifdef APP-PLUS
+				// this.changeCurrent(e)
+				//#endif
+			},
+			changeCurrent(e) {
+				// console.log('e: ====================>')
+				// console.log(e.detail.current)
+				this.index = e.detail.current;
+				this.$nextTick(() => {
+					for (let item of this.videoList) {
+						item.flag = false
+					}
+					this.videoList[this.index].flag = true
+				})
+			},
+			pushVideoList() {
+				showCooking.listVideo(this.queryParams).then((res) => {
+					// this.list = this.list.concat(res.rows);
+					// this.listTotal = res.total;
+					// console.log(res.rows)
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.check = res.rows[i].meIsLike;
+						obj.like = res.rows[i].likeNum;
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = '';
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = this.videoList.concat(arr);
+					this.queryParams.pageNum++
+					// this.$set(this.videoList[this.index], 'flag', true);
+				})
+				// let promise = new Promise((resolve,reject)=>{
+				// 	uni.request({
+				// 		url: 'https://api.apiopen.top/videoRecommend?id=127397',
+				// 		success: (res) => {
+				// 			let videoGroup = []
+				// 			for (let item of res.data.result) {
+				// 				if(item.type == 'videoSmallCard'){
+				// 					videoGroup.push({
+				// 						src:item.data.playUrl,
+				// 						content:item.data.title,
+				// 						flag:false,
+				// 						check:false,
+				// 						like:'7w',
+				// 						comment:'1045',
+				// 						at:item.data.author.name,
+				// 						id:item.data.author.icon,
+				// 						avater:item.data.author.icon,
+				// 						initialTime:0,
+				// 						duration:item.data.duration,
+				// 						id: 11
+				// 					})
+				// 				}
+				// 			}
+
+				// 			let len = this.videoList.filter(item=>item.src).length
+				// 			for(let i = len;i<len+videoGroup.length;i++){
+				// 				this.$set(this.videoList,i,videoGroup[i-len])
+
+				// 			}
+				// 			resolve()
+				// 		}
+				// 	})
+				// }) 
+				// return promise
+			},
+			pushMyReleaseVideoList() {
+				showCooking.myReleaseVideoList(this.queryParams).then((res) => {
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.check = res.rows[i].meIsLike;
+						obj.like = res.rows[i].likeNum;
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = '';
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = this.videoList.concat(arr);
+					this.queryParams.pageNum++
+					// this.$set(this.videoList[this.index], 'flag', true);
+				})
+			},
+			pushMySupportVideoList() {
+				showCooking.mySupportVideoList(this.queryParams).then((res) => {
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.check = res.rows[i].meIsLike;
+						obj.like = res.rows[i].likeNum;
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = '';
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = this.videoList.concat(arr);
+					this.queryParams.pageNum++
+					// this.$set(this.videoList[this.index], 'flag', true);
+				})
+			},
+			pushMyLikeVideoList() {
+				showCooking.myLikeVideoList(this.queryParams).then((res) => {
+					let arr = [];
+					for (var i = 0; i < res.rows.length; i++) {
+						let obj = {};
+						obj.id = res.rows[i].id;
+						obj.userId = res.rows[i].userId;
+						obj.userName = res.rows[i].userName;
+						obj.userUrl = res.rows[i].userUrl;
+						obj.src = res.rows[i].videoUrl;
+						obj.content = res.rows[i].videoDescription;
+						if (i == this.index) {
+							obj.flag = true;
+						} else {
+							obj.flag = false;
+						}
+						obj.check = res.rows[i].meIsLike;
+						obj.like = res.rows[i].likeNum;
+						obj.supportNum = res.rows[i].supportNum; // 点赞数量
+						obj.meIsSupport = res.rows[i].meIsSupport; // null：不是，'id'：是
+						obj.meIsFollow = res.rows[i].meIsFollow; // null：不是，'id'：是
+						obj.comment = res.rows[i].evaluationNum;
+						obj.avater = res.rows[i].userUrl || '/static/danxiaochu.png'
+						obj.initialTime = 0;
+						obj.at = res.rows[i].userName;
+						obj.duration = 1000;
+						// obj.poster = res.rows[i].videoCutImageUrl;
+						obj.poster = '';
+						// obj.linkName = res.rows[i].linkName;  
+						// obj.linkUrl = res.rows[i].linkUrl;  
+						arr.push(obj);
+					}
+					this.videoList = this.videoList.concat(arr);
+					this.queryParams.pageNum++
+					// this.$set(this.videoList[this.index], 'flag', true);
+				})
+			},
+			// 点赞
+			tapSupport(item) {
+				// console.log(meIsSupport)
+				if (item.meIsSupport) {
+					// 取消点赞
+					showCooking.cancelSupport({
+						id: item.id
+					}).then((res) => {
+						if (res.code == 200) {
+							// uni.showToast({
+							// 	title: res.msg,
+							// 	icon: 'none'
+							// });
+							item.meIsSupport = false
+							item.supportNum--
+							console.log(res)
+						}
+					})
+				} else {
+					// 点赞
+					showCooking.ShowCookingSupport({
+						showCookingId: item.id,
+						supportedUserId: item.userId
+					}).then((res) => {
+						if (res.code == 200) {
+							item.meIsSupport = true
+							item.supportNum++
+						}
+					})
+				}
+			},
+			// 收藏
+			tapLove(item) {
+				// this.videoList[this.index].check = !this.videoList[this.index].check
+				// this.videoList = [...this.videoList]
+				if (item.check) {
+					// 取消收藏
+					showCooking.cancelLike({
+						id: item.id
+					}).then((res) => {
+						if (res.code == 200) {
+							item.check = false
+							item.like--
+						}
+					})
+				} else {
+					// 收藏
+					showCooking.ShowCookingMyLike({
+						showCookingId: item.id,
+						supportedUserId: item.userId
+					}).then((res) => {
+						if (res.code == 200) {
+							item.check = true
+							item.like++
+						}
+					})
+				}
+			},
+			// 关注
+			tapAvater(item) {
+				console.log(item)
+				showCooking.ShowCookingFollow({
+					followedId: item.userId,
+					followedName: item.userName,
+					followedAvatar: item.userUrl,
+				}).then((res) => {
+					console.log(res)
+					if (res.code == 200) {
+						uni.showToast({
+							icon: 'success',
+							title: `关注成功`
+						})
+						this.$set(item, 'meIsFollow', true)
+						console.log(this.videoList)
+					}
+				})
+			},
+			// 评论
+			tapMsg(item) {
+				//#ifndef APP-NVUE
+				uni.showToast({
+					icon: 'none',
+					title: `查看索引为${this.index}的评论`
+				})
+				//#endif
+				//#ifdef APP-NVUE
+				uni.getSubNVueById('comment').show('none', 0, () => {
+					uni.$emit('showComment', item.id)
+				});
+				//#endif
+			},
+			tapShare() {
+				uni.showToast({
+					icon: 'none',
+					title: `分享索引为${this.index}的视频`
+				})
+			},
+			videoPlay(index) {
+				let promise = new Promise((resolve, reject) => {
+					resolve()
+				})
+				promise.then(res => {
+					this.$set(this.videoList[index], 'flag', !this.videoList[index].flag)
+
+				})
+			},
+			pauseVideo(val) {
+				// console.log(val)
+				if (this.oldIndex) {
+					// this.videoList[this.oldIndex].initialTime = 0;
+					// this.$set(this.videoList[this.oldIndex], 'initialTime', 0)
+				}
+
+				// if (typeof this.videoList[this.oldIndex].initialTime != 'undefined') this.videoList[this.oldIndex]
+				// 	.initialTime = val
+				// console.log(this.videoList)
+			},
+			clickVideo() {
+				console.log(123)
+				this.videoList[this.index].flag = !this.videoList[this.index].flag
+			}
+		},
+		watch: {
+			index(newVal, oldVal) {
+				// console.log(this.index)
+				this.$nextTick(() => {
+					if (this.videoList.length == this.videosTotal) return;
+					let len = this.videoList.filter(item => item.src).length
+					// 加载视频
+					if (len - this.index - 1 <= this.playCount) {
+						this.pushVideoList();
+						// console.log('可以加载啦~')
+						// console.log(this.queryParams)
+					}
+					this.oldIndex = oldVal
+				})
+			}
+		}
+	}
+</script>
+<style scoped>
+	.swiper {
+		flex: 1;
+		background-color: #000;
+	}
+
+	.swiper-item {
+		flex: 1;
+	}
+
+	.video {
+		flex: 1;
+	}
+
+	.video-box {
+		flex: 1;
+		width: 750rpx;
+	}
+
+	.cover-view-center {
+		position: absolute;
+		justify-content: center;
+		align-items: center;
+		opacity: 0.1;
+		z-index: 999;
+	}
+
+	.cover-view-left {
+		position: absolute;
+		margin-left: 10rpx;
+		width: 500rpx;
+		bottom: 120rpx;
+		z-index: 9999;
+		font-size: 32rpx;
+		color: #FFFFFF;
+		/* background-color: #DD524D; */
+		/* #ifndef APP-PLUS */
+		white-space: pre-wrap;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		/* #endif */
+	}
+
+	.left-view {
+		margin-bottom: 20rpx;
+	}
+
+	.left-text {
+		font-size: 32rpx;
+		color: #FFFFFF;
+	}
+
+	.avater {
+		border-radius: 50rpx;
+		border-color: #fff;
+		border-style: solid;
+		border-width: 4rpx;
+		width: 100rpx;
+		height: 100rpx;
+	}
+
+	.cover-view-right {
+		position: absolute;
+		bottom: 160rpx;
+		right: 20rpx;
+		/* background-color: #DD524D; */
+		/* #ifndef APP-PLUS-NVUE */
+		display: flex;
+		flex-direction: column;
+		/* #endif */
+		z-index: 9999;
+	}
+
+	.right-text-avater {
+		position: absolute;
+		font-size: 28rpx;
+		top: 80rpx;
+		left: 30rpx;
+		height: 40rpx;
+		width: 40rpx;
+		background-color: #DD524D;
+		color: #FFFFFF;
+		border-radius: 50%;
+		text-align: center;
+		line-height: 40rpx;
+		z-index: 999;
+	}
+
+	.avater-icon {
+		height: 40rpx;
+		width: 40rpx;
+
+		color: #fff;
+		background-color: #DD524D;
+		border-radius: 50%;
+		position: absolute;
+		left: 30rpx;
+		top: -20rpx;
+	}
+
+	.right-text {
+		text-align: center;
+		font-size: 28rpx;
+		color: #FFFFFF;
+		margin-bottom: 50rpx;
+		height: 40rpx;
+	}
+
+	.img {
+		height: 74rpx;
+		width: 74rpx;
+		opacity: 0.9;
+		margin-left: 12rpx;
+	}
+
+	.page {
+		/* #ifndef APP-PLUS-NVUE */
+		display: flex;
+		flex-direction: column;
+		/* #endif */
+		flex: 1;
+	}
+</style>

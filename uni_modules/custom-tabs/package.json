@@ -1,0 +1,84 @@
+{
+  "id": "custom-tabs",
+  "displayName": "Tabs标签页 灵活配置 多端兼容 简单易用（与element-ui的Tabs 标签页使用一致）",
+  "version": "1.0.5",
+  "description": "在做项目的过程中用到了tab切换，本想着去插件市场找一个直接现用，后面发现找到的tab切换并不是我想要的那种使用方式，于是我结合了element-ui中Tabs标签页的方式写了该组件...",
+  "keywords": [
+    "tabs",
+    "tab",
+    "tabs标签页",
+    "tab切换",
+    "标签页"
+],
+  "repository": "https://gitee.com/my_dear_li_pan/my-uni-modules.git",
+  "engines": {
+    "HBuilderX": "^3.3.11"
+  },
+  "dcloudext": {
+    "category": [
+        "前端组件",
+        "通用组件"
+    ],
+    "sale": {
+      "regular": {
+        "price": "0.00"
+      },
+      "sourcecode": {
+        "price": "0.00"
+      }
+    },
+    "contact": {
+      "qq": ""
+    },
+    "declaration": {
+      "ads": "无",
+      "data": "插件不采集任何数据",
+      "permissions": "无"
+    },
+    "npmurl": ""
+  },
+  "uni_modules": {
+    "dependencies": [],
+    "encrypt": [],
+    "platforms": {
+      "cloud": {
+        "tcb": "y",
+        "aliyun": "y"
+      },
+      "client": {
+        "Vue": {
+          "vue2": "y",
+          "vue3": "y"
+        },
+        "App": {
+          "app-vue": "y",
+          "app-nvue": "n"
+        },
+        "H5-mobile": {
+          "Safari": "u",
+          "Android Browser": "y",
+          "微信浏览器(Android)": "y",
+          "QQ浏览器(Android)": "y"
+        },
+        "H5-pc": {
+          "Chrome": "y",
+          "IE": "n",
+          "Edge": "y",
+          "Firefox": "y",
+          "Safari": "y"
+        },
+        "小程序": {
+          "微信": "y",
+          "阿里": "y",
+          "百度": "y",
+          "字节跳动": "y",
+          "QQ": "y"
+        },
+        "快应用": {
+          "华为": "u",
+          "联盟": "u"
+        }
+      }
+    }
+  }
+}

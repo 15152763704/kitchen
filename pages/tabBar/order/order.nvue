@@ -1,0 +1,857 @@
+<template>
+	<view class="order-container">
+		<view class="isNot-login" v-if="!isLogin">
+			<!-- <text>你还没有登录</text> -->
+			<!-- <text @click="toLogin()">去登陆</text> -->
+			<image style="width: 682rpx; margin-top: 450rpx;" src="../../../static/toLogin.png" mode="widthFix"></image>
+			<text class="isNot-login-text">您还没有登录，请登陆后查看订单</text>
+			<text class="actions-login" @click="toLogin()">登录/注册</text>
+		</view>
+		<view class="" v-if="isLogin">
+			<view class="header">
+				<view class="title" style="">
+					<text>订单</text>
+					<view class="funcIcon">
+						<!-- <image style="width: 30rpx; margin-right: 36rpx;" src="/static/order/search.png" mode="widthFix" @click="gotoSearch()">
+						</image>
+						<image style="width: 30rpx;" src="/static/order/info.png" mode="widthFix"></image>
+						<text class="infoNum" style="">99+</text> -->
+					</view>
+				</view>
+				<view class="oftenBuy-recently">
+					<view class="label">
+						<view class="label-l">
+							<text class="label-l-text">最近常买</text>
+						</view>
+						<view class="label-r">
+							<!-- <text class="label-r-text">查看更多商家</text>
+							<image style="width: 9rpx;" src="../../../static/order/right.png" mode="widthFix"></image> -->
+						</view>
+					</view>
+					<scroll-view scroll-x="true" style="flex-direction:row;" :show-scrollbar="false">
+						<view class="content">
+							<view v-if="storeList.length > 0" @click="toStore(item)" class="store-item" v-for="(item,index) in storeList">
+								<view class="">
+									<image class="store-item-img" style="width: 142rpx; height: 142rpx;" :src="item.shopImgUrl" mode="">
+									</image>
+								</view>
+								<view class="">
+									<text class="store-name">{{ item.name }}</text>
+								</view>
+								<view class="" style="flex-direction: row;">
+									<text class="buy-num">买过</text><text class="buy-num-a">{{ item.times }}</text><text class="buy-num2">次</text>														
+								</view>
+							</view>
+							<view v-if="storeList.length == 0" class="" style="display: flex; align-items: center; width: 684rpx; top: -40rpx;">
+								<image style="width: 260rpx;" src="../../../static/toLogin.png" mode="widthFix"></image>
+								<text style="font-size: 24rpx;">暂无常买~</text>
+							</view>
+						</view>
+					</scroll-view>
+				</view>
+				<view class="classify-list">
+					<view class="classify-list-item" v-for="(iitem,iindex) in classifyList" @click="selectClassify(iindex)">
+						<text class="classify-list-item-text"
+							:class="iitem.isChecked?'isChecked':''">{{ iitem.name }}</text>
+						<view class="text-dot" v-if="iitem.isChecked">
+							
+						</view>
+						<text class="showNum" v-if="iindex == 1 && orderList_dzf.length">
+							{{ orderList_dzf.length?orderList_dzf.length:'' }}
+						</text>
+						<text class="showNum" v-if="iindex == 2 && orderList_dsh.length">
+							{{ orderList_dsh.length?orderList_dsh.length:'' }}
+						</text>
+						<text class="showNum" v-if="iindex == 3 && orderList_dpj.length">
+							{{ orderList_dpj.length?orderList_dpj.length:'' }}
+						</text>
+					</view>
+				</view>
+				
+			</view>
+			
+			<scroll-view class="order-list" :scroll-y="true" :scroll-top="scrollViewTop" :show-scrollbar="false" @scroll="scroll" @scrolltolower="toLower" :style="{ height: screenHeight + 'rpx'}">
+				<order-list @toAchieve="toAchieve" @refundMoney="refundMoney" @toPay="toPay" @cancelOrder="cancelOrder" @againOne="againOne" :orderList="orderList">
+				</order-list>
+				<view v-if="orderList.length > 0" class="isBottom">
+					<text class="isBottom-leftLine"></text>
+					<text v-if="orderList.length >= orderTotal" class="isBottom-text">已经到底啦</text>
+					<text v-else class="isBottom-text">加载中...</text>
+					<text class="isBottom-rightLine"></text>
+				</view>
+			</scroll-view>
+		</view>
+		
+		<uni-popup ref="alertDialog" type="dialog" style="z-index: 9999">
+			<uni-popup-dialog type="info" cancelText="关闭" confirmText="同意" title="" :content="returnMsg"
+				@confirm="dialogConfirm" @close="dialogClose"></uni-popup-dialog>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import orderList from "./order-list.vue"
+	import orderForm from '@/api/orderForm/orderForm'; // 引入api
+	export default {
+		components: {
+			orderList
+		},
+		data() {
+			return {
+				isLogin: false,
+				storeList: [],
+				orderList: [],
+				oldScrollViewTop: 0,
+				scrollViewTop: -1,
+				orderList_all: [],
+				orderList_dzf: [],
+				orderList_dsh: [],
+				orderList_dpj: [],
+				orderList_tk: [],
+				classifyList: [{
+						isChecked: true,
+						name: '全部订单'
+					},
+					{
+						isChecked: false,
+						name: '待支付'
+					},
+					{
+						isChecked: false,
+						name: '待收货'
+					},
+					{
+						isChecked: false,
+						name: '待评价'
+					},
+					{
+						isChecked: false,
+						name: '退款'
+					}
+				],
+				listPortForm: {
+					pageNum: 1,
+					pageSize: 10,
+					status: '',
+					isPublish: ''
+				},
+				orderTotal: null,
+				returnMsg: '',
+				screenHeight: 0
+
+			}
+		},
+		methods: {
+			toLogin() {
+				uni.navigateTo({
+					url: '/pages/login/login'
+				})
+			},
+			scroll(e) {
+				// console.log(e)
+				this.oldScrollViewTop = e.detail.scrollTop;
+			},
+			selectClassify(index) {
+				let classifyList = this.classifyList;
+				for (var i = 0; i < classifyList.length; i++) {
+					classifyList[i].isChecked = false;
+				}
+				classifyList[index].isChecked = true;
+				this.scrollViewTop = this.oldScrollViewTop;
+				this.$nextTick(() => {
+					this.scrollViewTop = 0
+				});
+				switch (index) {
+					case 0:
+						this.listPortForm.pageNum = 1
+						this.listPortForm.status = ''
+						this.listPortForm.isPublish = ''
+						// this.orderList = [];
+						this.orderList = this.orderList_all;
+						break;
+					case 1:
+						this.listPortForm.pageNum = 1
+						this.listPortForm.status = 0
+						this.listPortForm.isPublish = 0
+						// this.orderList = [];
+						this.orderList = this.orderList_dzf;
+						break;
+					case 2:
+						this.listPortForm.pageNum = 1
+						this.listPortForm.status = 2
+						this.listPortForm.isPublish = 0
+						// this.orderList = [];
+						this.orderList = this.orderList_dsh;
+						break;
+					case 3:
+						this.listPortForm.pageNum = 1
+						this.listPortForm.status = 3
+						this.listPortForm.isPublish = 0
+						// this.orderList = [];
+						this.orderList = this.orderList_dpj;
+						break;
+					default:
+						this.listPortForm.pageNum = 1
+						this.listPortForm.status = 4
+						this.listPortForm.isPublish = ''
+						// this.orderList = [];
+						this.orderList = this.orderList_tk;
+						break;
+				}
+				
+				// this.findMyOrderList();
+			},
+			gotoSearch() {
+				uni.navigateTo({
+					url: '/pages/search/search',
+					animationType: 'fade-in'
+					// animationDuration: 200
+				});
+			},
+			// 订单列表
+			findMyOrderList() {
+				let pageNum = this.listPortForm.pageNum
+				let pageSize = this.listPortForm.pageSize
+				let status = this.listPortForm.status
+				let isPublish = this.listPortForm.isPublish
+
+				orderForm.findMyOrderList(status, pageNum, pageSize, isPublish).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// pageNum pageSize
+						this.orderList = this.orderList.concat(res.rows);
+						this.orderTotal = res.total
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						// this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			// 订单列表(all)
+			findMyOrderList_all() {
+				let pageNum = 1
+				let pageSize = this.listPortForm.pageSize
+				let status = ''
+				let isPublish = ''
+			
+				orderForm.findMyOrderList(status, pageNum, pageSize, isPublish).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// pageNum pageSize
+						this.orderList_all = res.rows;
+						// this.orderTotal = res.total
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						// this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+			
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			// 订单列表(dzf)
+			findMyOrderList_dzf() {
+				let pageNum = 1
+				let pageSize = this.listPortForm.pageSize
+				let status = 0
+				let isPublish = 0
+			
+				orderForm.findMyOrderList(status, pageNum, pageSize, isPublish).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// pageNum pageSize
+						this.orderList_dzf = res.rows;
+						// this.orderTotal = res.total
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						// this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+			
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			// 订单列表(dsh)
+			findMyOrderList_dsh() {
+				let pageNum = 1
+				let pageSize = this.listPortForm.pageSize
+				let status = 2
+				let isPublish = 0
+			
+				orderForm.findMyOrderList(status, pageNum, pageSize, isPublish).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// pageNum pageSize
+						this.orderList_dsh = res.rows;
+						// this.orderTotal = res.total
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						// this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+			
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			// 订单列表(dpj)
+			findMyOrderList_dpj() {
+				let pageNum = 1
+				let pageSize = this.listPortForm.pageSize
+				let status = 3
+				let isPublish = 0
+			
+				orderForm.findMyOrderList(status, pageNum, pageSize, isPublish).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// pageNum pageSize
+						this.orderList_dpj = res.rows;
+						// this.orderTotal = res.total
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						// this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+			
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			// 订单列表(tk)
+			findMyOrderList_tk() {
+				let pageNum = 1
+				let pageSize = this.listPortForm.pageSize
+				let status = 4
+				let isPublish = ''
+			
+				orderForm.findMyOrderList(status, pageNum, pageSize, isPublish).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// pageNum pageSize
+						this.orderList_tk = res.rows;
+						// this.orderTotal = res.total
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						// this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+			
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			// 更改状态
+			updateStatus(status, takeOutOrderId) {
+				orderForm.updateStatus(status, takeOutOrderId).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						uni.showToast({
+							title: '成功',
+							icon: 'none'
+						});
+						this.listPortForm.pageNum = 1;
+						this.orderList = []
+						this.findMyOrderList();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			// 最近常买
+			oftenBuyList() {
+				orderForm.oftenBuyList().then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// pageNum pageSize
+						// console.log(res.rows)
+						this.storeList = res.rows
+					} else {
+						// uni.showToast({
+						// 	title: res.msg,
+						// 	icon: 'none'
+						// });
+					}
+
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			toStore(item) {
+				// console.log(item.id)
+				uni.navigateTo({
+					url: '../../store/store?id=' + item.id
+				})
+			},
+			// 再来一单
+			againOrder(orderId, shopId, from) {
+				orderForm.againOrder(orderId).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						uni.navigateTo({
+							url: '../../store/store?id=' + shopId + '&from=' + from
+						})
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+
+				}).catch(err => {
+					// uni.hideLoading();
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					});
+				});
+			},
+			toPay(item) {
+				// console.log(item.orderStatus)
+				// console.log(item.orderId)
+				this.updateStatus(1, item.orderId)
+			},
+			// 申请退款
+			refundMoney(item) {
+				this.updateRefundStatus(0, item.orderId);
+			},
+			// 确认收货
+			toAchieve(item) {
+				this.updateStatus(3, item.orderId)
+			},
+			// 更改订单退款状态
+			updateRefundStatus(refundMoneyStatus, takeOutOrderId) {
+				orderForm.updateRefundStatus(refundMoneyStatus, takeOutOrderId).then(res => {
+					if (res.code == 200) {
+						uni.showToast({
+							title: '退款申请已提交',
+							icon: 'success'
+						});
+						this.listPortForm.pageNum = 1;
+						this.orderList = [];
+						this.findMyOrderList();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+				}).catch(err => {
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					})
+				});
+			},
+			cancelOrder(item) {
+				this.updateStatus(4, item.orderId)
+			},
+			againOne(item) {
+				// item.shopId
+				this.againOrder(item.orderId, item.shopId, 'again');
+			},
+			dialogToggle() {
+				this.$refs.alertDialog.open()
+			},
+			dialogConfirm() {
+				uni.removeStorageSync('token_key');
+				uni.navigateTo({
+					url: '/pages/login/login'
+				})
+			},
+			dialogClose() {
+				// console.log('点击关闭')
+				uni.removeStorageSync('token_key');
+				uni.navigateTo({
+					url: '/pages/login/login'
+				})
+			},
+			toLower() {
+				// console.log('toLower')
+				if (this.orderList.length >= this.orderTotal) return;
+				this.listPortForm.pageNum++;
+				this.findMyOrderList();
+			}
+		},
+		mounted() {
+
+		},
+		onLoad() {
+			this.oftenBuyList();
+			// this.findMyOrderList();
+			uni.getSystemInfo({
+				success: res => {
+					this.screenHeight = (res.screenHeight * (750 / res.windowWidth)) - 750 //将px 转换rpx
+				}
+			});
+		},
+		onHide() {
+			this.listPortForm.pageNum = 1
+		},
+		onShow() {
+			if (uni.getStorageSync('token_key')) {
+				// console.log('有token')
+				this.isLogin = true;
+				// this.orderList = [];
+				// this.oftenBuyList();
+				this.orderList = [];
+				this.findMyOrderList();
+				this.findMyOrderList_all();
+				this.findMyOrderList_dpj();
+				this.findMyOrderList_dsh();
+				this.findMyOrderList_dzf();
+				this.findMyOrderList_tk();
+			}
+		},
+		onReachBottom() {
+			// console.log('触底啦~')
+			// if (this.orderList.length >= this.orderTotal) return;
+			// this.listPortForm.pageNum++;
+			// this.findMyOrderList();
+		},
+	}
+</script>
+
+<style scoped>
+	.isNot-login {
+		position: relative;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		height: 1200rpx;
+	}
+	.isNot-login-text {
+		font-size: 24rpx;
+		color: #A8A8A8;
+		position: absolute;
+		top: 974rpx;
+	}
+	.actions-login {
+		font-size: 28rpx;
+		position: absolute;
+		top: 1070rpx;
+		background-image: linear-gradient(to right, #F0C819, #FF9D00);
+		padding: 8rpx 26rpx;
+		border-radius: 10rpx;
+	}
+	.isBottom {
+		/* text-align: center; */
+		position: relative;
+		margin-bottom: 14rpx;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.isBottom-text {
+		font-size: 24rpx;
+		color: rgb(186, 186, 186);
+		text-align: center;
+		margin: 0 20rpx;
+	}
+	
+	.isBottom-leftLine {
+		width: 160rpx;
+		height: 4rpx;
+		background: #e5e5e5;
+	}
+	
+	.isBottom-rightLine {
+		width: 160rpx;
+		height: 4rpx;
+		background: #e5e5e5;
+	}
+
+	.fw-500 {
+		font-weight: 500;
+	}
+
+	.fs-28 {
+		font-size: 28rpx;
+	}
+
+	.fs-24 {
+		font-size: 24rpx;
+	}
+
+	.flex-row {
+		flex-direction: row;
+	}
+
+	.flex-justify-between {
+		justify-content: space-between;
+	}
+
+	.flex-items-center {
+		align-items: center;
+	}
+
+	.order-container {
+		width: 750rpx;
+		/* height: 2000rpx; */
+		background-color: #F5F6F7;
+
+	}
+
+	.header {
+		width: 750rpx;
+		height: 640rpx;
+		font-size: 40rpx;
+		font-weight: 500;
+		position: relative;
+		padding-top: 102rpx;
+		/* box-sizing: border-box; */
+		position: sticky;
+		background-color: #FFFFFF;
+		background-image: linear-gradient(to bottom, #FFBF31, #F5F6F7);
+		/* z-index: 99999; */
+	}
+
+	.title {
+		margin-bottom: 34rpx;
+		flex-direction: row;
+		justify-content: center;
+	}
+
+	.funcIcon {
+		flex-direction: row;
+		/* height: 64rpx; */
+		align-items: center;
+		position: absolute;
+		right: 26rpx;
+		top: 6rpx;
+	}
+
+	.infoNum {
+		font-size: 12rpx;
+		color: #FFFFFF;
+		background-color: #FF0000;
+		/* display: block; */
+		position: absolute;
+		top: -6rpx;
+		right: -16rpx;
+		border-radius: 10rpx;
+		padding: 0 4rpx 2rpx;
+		/* box-sizing: border-box; */
+		/* z-index: 99999 */
+	}
+
+	.oftenBuy-recently {
+		width: 706rpx;
+		height: 334rpx;
+		background-color: #FFFFFF;
+		border-radius: 28rpx;
+		margin-left: 22rpx;
+		padding-top: 26rpx;
+		padding-left: 22rpx;
+		/* padding-bottom: 24rpx; */
+
+	}
+
+	.label {
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		padding-right: 44rpx;
+		margin-bottom: 12rpx;
+	}
+
+	.label-l-text {
+		font-size: 36rpx;
+		font-weight: 500;
+	}
+
+	.label-r {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.label-r-text {
+		font-size: 24rpx;
+		color: #808080;
+		margin-right: 14rpx;
+	}
+
+	.content {
+		flex-direction: row;
+	}
+
+	.store-item {
+		width: 142rpx;
+		height: 222rpx;
+		border-radius: 8rpx;
+		background-color: #F5F6F7;
+		margin-right: 16rpx;
+		overflow: hidden
+	}
+	
+	.store-item-img {
+		border-radius: 8rpx 8rpx 0 0;
+	}
+	
+	.store-name {
+		font-size: 24rpx;
+		font-weight: 600;
+		margin-left: 6rpx;
+		/* #ifndef H5 */
+		margin-top: 12rpx;
+		lines: 1;
+		text-overflow: ellipsis;
+		/* #endif */
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		width: 130rpx;
+		lines: 1;
+		text-overflow: ellipsis;
+	}
+
+	.buy-num {
+		margin-left: 6rpx;
+		/* #ifndef H5 */
+		margin-top: 6rpx;
+		/* #endif */
+		font-size: 20rpx;
+		color: #808080;
+	}
+	.buy-num-a {
+		/* #ifndef H5 */
+		margin-top: 6rpx;
+		/* #endif */
+		font-size: 20rpx;
+		color: #EA872C;
+	}
+	.buy-num2 {
+		/* #ifndef H5 */
+		margin-top: 6rpx;
+		/* #endif */
+		font-size: 20rpx;
+		color: #808080;
+	}
+
+	.classify-list {
+		flex-direction: row;
+		padding-left: 22rpx;
+		/* margin-top: 42rpx; */
+		/* top: 600rpx; */
+		z-index: 9999;
+		position: absolute;
+		bottom: 24rpx;
+	}
+	.classify-list-item {
+		display: flex;
+		align-items: center;
+		position: relative;
+		/* margin-right: 50rpx; */
+		width: 140rpx;
+		height: 60rpx;
+	}
+	.classify-list-item-text {
+		font-size: 28rpx;
+		color: #808080;
+		margin: 14rpx auto 0;
+		/* margin-right: 50rpx; */
+		/* border-bottom: 6rpx solid #FDCE4D;
+		padding-bottom: 12rpx; */
+	}
+	.text-dot {
+		width: 36rpx;
+		height: 8rpx;
+		background-color: #FDCE4D;
+		margin-top: 4rpx;
+		border-radius: 8rpx;
+	}
+	.isChecked {
+		font-weight: 500;
+		color: #000000 !important;
+	}
+
+	.showNum{
+		position: absolute;
+		font-size: 24rpx;
+		background: red;
+		color: #FFFFFF;
+		width: 28rpx;
+		height: 28rpx;
+		line-height: 28rpx;
+		border-radius: 14rpx;
+		text-align: center;
+		top: 2rpx;
+		right: 12rpx;
+	}
+	.order-list {
+		padding: 0 22rpx;
+		/* margin-top: 20rpx; */
+		/* height: calc(100vh - 200rpx); */
+	}
+</style>

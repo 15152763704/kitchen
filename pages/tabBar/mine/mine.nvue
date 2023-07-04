@@ -1,0 +1,680 @@
+<template>
+	<view class="mine-container">
+		<view class="isNot-login" v-if="!isLogin">
+			<!-- <text>你还没有登录</text> -->
+			<!-- <text @click="toLogin()">去登陆</text> -->
+			<image style="width: 682rpx; margin-top: 450rpx;" src="../../../static/toLogin.png" mode="widthFix"></image>
+			<text class="isNot-login-text">您还没有登录，请登陆后查看我的</text>
+			<text class="actions-login" @click="toLogin()">登录/注册</text>
+		</view>
+		<view class="" v-if="isLogin">
+			<view class="header">
+				<view class="title" style="">
+					<!-- avtor -->
+					<view class="avtor-info" @click="toMyInfo()">
+						<view class="avtor-info-photo">
+							<image style="width: 98rpx; height: 98rpx; border-radius: 50rpx;" :src="userInfo.avatar?userInfo.avatar:'/static/danxiaochu.png'" mode="">
+							</image>
+						</view>
+						<text class="avtor-info-name">{{ userInfo.nickName }}</text>
+					</view>
+					<!-- actions -->
+					<view class="funcIcon">
+						<image @click="toMyInfo()" style="width: 38rpx; margin-right: 46rpx;" src="/static/mine/peizhi.png" mode="widthFix">
+						</image>
+						<!-- <image style="width: 35rpx;" src="/static/order/info.png" mode="widthFix"></image> -->
+						<!-- <text class="infoNum" style="">99+</text> -->
+					</view>
+				</view>
+				<view class="my-wallet">
+					<view class="label">
+						<text class="label-text">我的钱包</text>
+					</view>
+					<view class="cards">
+						<!-- 红包 -->
+						<view class="cards-item flex-items-center" @click="toggleRedenvelope()">
+							<view class="flex-row flex-items-center" style="margin-bottom: 20rpx;">
+								<image style="width: 30rpx; height: 30rpx;" src="../../../static/mine/hongbao.png" mode=""></image>
+								<text class="fs-24 fw-500 mg-left" style="">红包</text>
+							</view>
+							<view class="flex-row flex-items-center">
+								<text class="fs-34 fw-500" style="color: #F75732; margin-bottom: 8rpx;">{{ myPackageNum }}</text><text
+									class="fs-20" style="color: #808080;">个未使用</text>
+							</view>
+						</view>
+						<!-- 代金券 -->
+						<view class="cards-item flex-items-center" @click="toggleCashCoupon()">
+							<view class="flex-row flex-items-center" style="margin-bottom: 20rpx;">
+								<image style="width: 30rpx; height: 30rpx;" src="../../../static/mine/daijinquan.png" mode="">
+								</image>
+								<text class="fs-24 fw-500 mg-left" style="">代金券</text>
+							</view>
+							<view class="flex-row flex-items-center">
+								<text class="fs-34 fw-500" style="color: #F75732; margin-bottom: 8rpx;">{{ myCouponCardNum }}</text><text
+									class="fs-20" style="color: #808080;">个未使用</text>
+							</view>
+						</view>
+						<!-- 储值卡 -->
+						<view class="cards-item flex-items-center" @click="toggleStoreCard()">
+							<view class="flex-row flex-items-center" style="margin-bottom: 20rpx;">
+								<!-- <image style="width: 30rpx;" src="../../../static/mine/yinhangka.png" mode="widthFix">
+								</image> -->
+								<text class="fs-24 fw-500 mg-left" style="">储值卡</text>
+							</view>
+							<view class="flex-row flex-items-center">
+								<!-- <text class="fs-34 fw-500" style="color: #F75732; margin-bottom: 8rpx; visibility: hidden;">0</text> -->
+								<text
+									class="fs-34 fw-500" style="color: #F75732; margin-bottom: 8rpx;">{{ myStoreCardTotal }}</text><text
+									class="fs-20" style="color: #808080;">张</text>
+							</view>
+						</view>
+						<!-- 领红包 -->
+						<view class="cards-item flex-items-center" @click="toggleGetRedenvelope()">
+							<view class="flex-row flex-items-center" style="margin-bottom: 20rpx;">
+								<!-- <image style="width: 30rpx;" src="../../../static/mine/yinhangka.png" mode="widthFix">
+								</image> -->
+								<text class="fs-24 fw-500 mg-left" style="">领红包</text>
+							</view>
+							<view class="flex-row flex-items-center">
+								<text class="fs-34 fw-500" style="color: #F75732; margin-bottom: 8rpx; visibility: hidden;">0</text>
+								<text
+									class="fs-20" style="color: #808080;">领取平台红包</text>
+							</view>
+						</view>
+						<!-- 积分 -->
+						<view class="cards-item flex-items-center">
+							<view class="flex-row flex-items-center" style="margin-bottom: 20rpx;">
+								<!-- <image style="width: 30rpx;" src="../../../static/mine/yinhangka.png" mode="widthFix">
+								</image> -->
+								<text class="fs-24 fw-500 mg-left" style="">积分</text>
+							</view>
+							<view class="flex-row flex-items-center" style="margin-right: 8rpx;">
+								<text class="fs-34 fw-500" style="color: #F75732; margin-bottom: 8rpx; visibility: hidden;">0</text>
+								<text
+									class="fs-34" style="color: #F75732;">{{ myIntegralCount }}</text>
+							</view>
+						</view>
+					</view>
+				</view>
+			</view>
+			<!-- 我的收藏 -->
+			<view class="my-collection common-module">
+				<view class="">
+					<text class="common-module-title">我的收藏</text>
+				</view>
+				<scroll-view class="flex-row" scroll-x style="position: relative;">
+					<view class="flex-row">
+						<view class="collection-item" v-for="(item,index) in myClist">
+							<image class="collection-item-pic" :src="item.shopImgUrl" mode=""></image>
+						</view>
+						<view v-if="!myClist.length" class="collection-item" style="">
+							<text style="font-size: 24rpx;">暂无收藏~</text>
+						</view>
+					</view>
+				</scroll-view>
+				<view v-if="myClist.length" class="collection-item-mask" @click="toMycollection()">
+					<view class="flex-row flex-items-center">
+						<view class="">
+							<text class="fs-24">{{ clistTotal }}家店铺</text>
+							<text class="fs-24">点击查看</text>
+						</view>
+						<image style="width: 17rpx; margin-left: 28rpx;" src="../../../static/mine/right.png"
+							mode="widthFix"></image>
+					</view>
+				</view>
+			</view>
+			<!-- 我的功能 -->
+			<view class="my-functions common-module">
+				<view class="">
+					<text class="common-module-title">我的功能</text>
+				</view>
+				<view class="functions-list common-module-list flex-row">
+					<view class="functions-item common-module-item" v-for="(item,index) in functionsList"
+						@click="gotoFunctions(index)">
+						<image style="width: 60rpx; margin-bottom: 24rpx;" :src="item.pic" mode="widthFix"></image>
+						<text class="common-module-item-title">{{ item.title }}</text>
+					</view>
+				</view>
+			</view>
+			<!-- 我的服务 -->
+			<!-- <view class="common-module">
+				<view class="">
+					<text class="common-module-title">我的服务</text>
+				</view>
+				<view class="common-module-list flex-row">
+					<view class="common-module-item" v-for="(item,index) in serviceList" @click="gotoService(index)">
+						<image style="width: 60rpx; margin-bottom: 24rpx;" :src="item.pic" mode="widthFix"></image>
+						<text class="common-module-item-title">{{ item.title }}</text>
+					</view>
+				</view>
+			</view> -->
+			<!-- 更多推荐 -->
+			<view class="common-module">
+				<view class="">
+					<text class="common-module-title">其他</text>
+				</view>
+				<view class="common-module-list flex-row">
+					<view class="common-module-item" v-for="(item,index) in recommendList" @click="gotoRecommend(index)">
+						<image style="width: 60rpx; margin-bottom: 24rpx;" :src="item.pic" mode="widthFix"></image>
+						<text class="common-module-item-title">{{ item.title }}</text>
+					</view>
+				</view>
+			</view>
+		</view>
+		
+		<uni-popup ref="alertDialog" type="dialog" style="z-index: 9999">
+			<uni-popup-dialog type="info" cancelText="关闭" confirmText="同意" title="" :content="returnMsg"
+				@confirm="dialogConfirm" @close="dialogClose"></uni-popup-dialog>
+		</uni-popup>
+	</view>
+</template>
+
+<script>
+	import orderForm from '@/api/orderForm/orderForm.js'
+	import shop from '@/api/shop/shop.js'
+	import login from '@/api/login/login.js'
+	export default {
+		data() {
+			return {
+				isLogin: false,
+				userInfo: uni.getStorageSync('userInfo_key'),
+				functionsList: [{
+						title: '我的地址',
+						pic: '/static/mine/wodedizhi.png'
+					},
+					{
+						title: '我的足迹',
+						pic: '/static/mine/wodezuji.png'
+					},
+					{
+						title: '我的评价',
+						pic: '/static/mine/wodepingjia.png'
+					},
+					{
+						title: '我的预约',
+						pic: '/static/mine/wodeyuyue.png'
+					}
+				],
+				serviceList: [{
+						title: '常见问题',
+						pic: '/static/mine/changjianwenti.png'
+					},
+					{
+						title: '问题反馈',
+						pic: '/static/mine/wentifankui.png'
+					},
+					{
+						title: '客服中心',
+						pic: '/static/mine/kefuzhongxin.png'
+					}
+				],
+				recommendList: [/* {
+						title: '邀请有奖',
+						pic: '/static/mine/yaoqingyoujiang.png'
+					}, */
+					{
+						title: '商家入驻',
+						pic: '/static/mine/shangjiaruzhu.png'
+					},
+					{
+						title: '发票助手',
+						pic: '/static/mine/fapiaozhushou.png'
+					}
+				],
+				myPackageNum: 0,
+				myCouponCardNum: 0,
+				returnMsg: '',
+				myClist: [],
+				clistTotal: null,
+				myIntegralCount: 0,
+				myStoreCardTotal: 0
+			}
+		},
+		methods: {
+			toLogin() {
+				uni.navigateTo({
+					url: '/pages/login/login'
+				})
+			},
+			toMyInfo() {
+				uni.navigateTo({
+					url: '/pages/myPersonalinfo/my-personalinfo'
+				})
+			},
+			gotoFunctions(index) {
+				switch (index) {
+					case 0:
+						uni.navigateTo({
+							url: '../../myAddress/my-address'
+						});
+						break;
+					case 1:
+						uni.navigateTo({
+							url: '../../myFootprint/my-footprint'
+						});
+						break;
+					case 2:
+						uni.navigateTo({
+							url: '../../myEvaluation/my-evaluation'
+						});
+						break;
+					default:
+						uni.navigateTo({
+							// url: '../../myInvoice/my-invoice'
+							url: '../../orderSeat/myOrder/my-order'
+						});
+				}
+
+			},
+			gotoService(index) {
+				switch (index) {
+					case 0:
+						uni.navigateTo({
+							// url: '../../fineFood/fine-food?ID=' + index
+						});
+						break;
+					case 1:
+						uni.navigateTo({
+							// url: '../../preparedFood/prepared-food?ID=' + index
+						});
+						break;
+					default:
+						uni.navigateTo({
+							// url: '../../sweetDrinks/sweet-drinks?ID=' + index
+						});
+				}
+			},
+			gotoRecommend(index) {
+				switch (index) {
+					case 0:
+						uni.navigateTo({
+							// url: '../../merchantIn/merchant-in'
+							url: '../../merchantIn/login?from=0'
+						});
+						break;
+					default:
+						uni.navigateTo({
+							url: '../../myInvoice/my-invoice'
+						});
+				}
+			},
+			toggleRedenvelope() {
+				uni.navigateTo({
+					url: '../../orderForm/redEnvelope/red-envelope?from=mine'
+				})
+			},
+			toggleCashCoupon() {
+				uni.navigateTo({
+					url: '../../orderForm/cashCoupon/cash-coupon?from=mine'
+				})
+			},
+			toggleStoreCard() {
+				uni.navigateTo({
+					url: '../../myStoreCard/my-storecard'
+				})
+			},
+			toggleGetRedenvelope() {
+				uni.navigateTo({
+					url: '../../orderForm/redEnvelope/get-envelope'
+				})
+			},
+			// 我的收藏
+			toMycollection() {
+				uni.navigateTo({
+					url: '/pages/myCollection/my-collection'
+				})
+			},
+ 			// 获取红包列表
+			getMyPackageMoneyList() {
+				orderForm.getMyPackageMoneyList().then(res => {
+					if (res.code == 200) {
+						// console.log(res.total)
+						// this.myPackageList = res.rows;
+						this.myPackageNum = res.total;
+						this.findMyLikeShop();
+						this.getMyCouponCardList('');
+						this.findMyIntegralCount();
+						this.findStoreCardController();
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+				}).catch(err => {
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					})
+				});
+			},
+			// 获取代金券列表
+			getMyCouponCardList(shopId) {
+				orderForm.getMyCouponCardList(shopId).then(res => {
+					if (res.code == 200) {
+						// console.log(res.total)
+						this.myCouponCardNum = res.total;
+						// console.log(this.myCouponCardList)
+					} else if (res.code == 401) {
+						this.returnMsg = res.msg + '，请重新登录';
+						this.dialogToggle();
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+				}).catch(err => {
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					})
+				});
+			},
+			dialogToggle() {
+				this.$refs.alertDialog.open()
+			},
+			dialogConfirm() {
+				uni.removeStorageSync('token_key');
+				uni.navigateTo({
+					url: '/pages/login/login'
+				})
+			},
+			dialogClose() {
+				// console.log('点击关闭')
+				uni.removeStorageSync('token_key');
+				uni.navigateTo({
+					url: '/pages/login/login'
+				})
+			},
+			// 我的收藏
+			findMyLikeShop() {
+				let pageNum = 1;
+				let pageSize = 8;
+				shop.findMyLikeShop(pageNum, pageSize).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						this.myClist = res.data;
+						this.clistTotal = res.total;
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+				}).catch(err => {
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					})
+				});
+			},
+			// 我的积分
+			findMyIntegralCount() {
+				login.findMyIntegralCount().then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// console.log(res.msg);
+						this.myIntegralCount = res.msg;
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+				}).catch(err => {
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					})
+				});
+			},
+			// 我的储值卡
+			findStoreCardController() {
+				login.findStoreCardController(uni.getStorageSync('userInfo_key').phonenumber).then(res => {
+					// console.log(res)
+					if (res.code == 200) {
+						// console.log(res);
+						this.myStoreCardTotal = res.total;
+					} else {
+						uni.showToast({
+							title: res.msg,
+							icon: 'none'
+						});
+					}
+				}).catch(err => {
+					uni.showToast({
+						title: err.msg,
+						icon: 'none'
+					})
+				});
+			}
+		},
+		onShow() {
+			this.userInfo = uni.getStorageSync('userInfo_key');
+			// console.log('token_key===》',uni.getStorageSync('token_key'))
+			if (uni.getStorageSync('token_key')) {
+				// console.log('有token')
+				this.isLogin = true;
+				console.log(this.isLogin)
+				this.getMyPackageMoneyList();
+				// this.getMyCouponCardList('');   放到getMyPackageMoneyList（）成功回调函数内
+			}
+		}
+	}
+</script>
+
+<style scoped>
+	.isNot-login {
+		position: relative;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		height: 1200rpx;
+	}
+	.isNot-login-text {
+		font-size: 24rpx;
+		color: #A8A8A8;
+		position: absolute;
+		top: 974rpx;
+	}
+	.actions-login {
+		font-size: 28rpx;
+		position: absolute;
+		top: 1070rpx;
+		background-image: linear-gradient(to right, #F0C819, #FF9D00);
+		padding: 8rpx 26rpx;
+		border-radius: 10rpx;
+	}
+	.flex-row {
+		flex-direction: row;
+	}
+
+	.flex-justify-between {
+		justify-content: space-between;
+	}
+
+	.flex-items-center {
+		align-items: center;
+	}
+
+	.mine-container {
+		width: 750rpx;
+		/* height: 2000rpx; */
+		background-color: #F5F6F7;
+
+	}
+
+	.fs-34 {
+		font-size: 34rpx;
+	}
+
+	.fs-24 {
+		font-size: 24rpx;
+	}
+
+	.fs-20 {
+		font-size: 20rpx;
+	}
+
+	.fw-500 {
+		font-weight: 500;
+	}
+
+	.mg-left {
+		margin-left: 10rpx;
+	}
+
+	.header {
+		width: 750rpx;
+		height: 546rpx;
+		position: relative;
+		padding-top: 130rpx;
+		/* box-sizing: border-box; */
+		position: sticky;
+		background-color: #FFFFFF;
+		background-image: linear-gradient(to bottom, #FFBF31, #FEFDFA);
+		/* z-index: 99999; */
+	}
+
+	.title {
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 26rpx 0 22rpx;
+	}
+
+	.avtor-info {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.avtor-info-photo {
+		/* border-radius: 50rpx 50rpx 50rpx 50rpx; */
+		/* overflow: hidden; */
+		margin-right: 16rpx;
+	}
+
+	.avtor-info-name {
+		width: 460rpx;
+		white-space: nowrap;
+		word-break: break-all;
+		font-size: 36rpx;
+		font-weight: 500;
+		/* #ifdef APP-PLUS */
+		lines: 1;
+		text-overflow: ellipsis;
+		/* #endif */
+	}
+
+	.funcIcon {
+		flex-direction: row;
+		/* height: 64rpx; */
+		align-items: center;
+		/* position: absolute; */
+		/* right: 26rpx; */
+		/* top: 6rpx; */
+	}
+
+	.my-wallet {
+		width: 708rpx;
+		height: 266rpx;
+		background: linear-gradient(to bottom, #FDFAE8, #FFF7C7);
+		border-radius: 26rpx;
+		margin-left: 22rpx;
+		margin-top: 52rpx;
+		border: 2rpx solid #F2C050;
+		padding: 48rpx 22rpx 0;
+	}
+
+	.label-text {
+		font-size: 28rpx;
+		font-weight: 500;
+	}
+
+	.cards {
+		flex-direction: row;
+		justify-content: space-between;
+		margin-top: 32rpx;
+	}
+
+	.cards-item {
+		/* padding: 0 26rpx; */
+	}
+
+	.infoNum {
+		font-size: 12rpx;
+		color: #FFFFFF;
+		background-color: #FF0000;
+		/* display: block; */
+		position: absolute;
+		top: -6rpx;
+		right: -16rpx;
+		border-radius: 10rpx;
+		padding: 0 4rpx 2rpx;
+		/* box-sizing: border-box; */
+		/* z-index: 99999 */
+	}
+
+	.my-collection {
+		padding: 48rpx 0 48rpx 22rpx !important;
+	}
+
+	.common-module {
+		width: 708rpx;
+		/* height: ; */
+		border-radius: 26rpx;
+		background-color: #FFFFFF;
+		margin-top: 28rpx;
+		margin-left: 22rpx;
+		padding: 48rpx 20rpx 48rpx 20rpx;
+	}
+
+	.common-module-title {
+		font-size: 28rpx;
+		font-weight: 500;
+		margin-bottom: 38rpx;
+	}
+
+	.collection-item-pic {
+		width: 188rpx;
+		height: 142rpx;
+		border-radius: 12rpx;
+		margin-right: 8rpx;
+	}
+
+	.collection-item-mask {
+		width: 178rpx;
+		height: 260rpx;
+		background: rgba(255, 255, 255, 0.9);
+		position: absolute;
+		/* z-index: 99; */
+		bottom: 0;
+		right: 0;
+		padding-left: 28rpx;
+		/* #ifdef H5 */
+		right: -2rpx;
+		padding-top: 108rpx;
+		/* #endif */
+		/* #ifdef APP-NVUE */
+		padding-top: 118rpx;
+		/* #endif */
+		text-align: center;
+	}
+
+	.common-module-list {
+		flex-wrap: wrap;
+	}
+
+	.common-module-item {
+		width: 166rpx;
+		align-items: center;
+	}
+
+	.common-module-item-title {
+		font-size: 24rpx;
+	}
+</style>

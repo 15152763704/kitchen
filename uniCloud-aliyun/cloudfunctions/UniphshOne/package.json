@@ -1,0 +1,8 @@
+{
+  "name": "testUniphsh",
+  "dependencies": {},
+  "extensions": {
+    "uni-cloud-jql": {},
+    "uni-cloud-push": {}
+  }
+}

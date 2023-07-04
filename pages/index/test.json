@@ -1,0 +1,181 @@
+[{
+	"name": "FPX",
+	"tag": 5,
+	"icon": "flag",
+	"list": [
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg",
+			"name": "夏洛特"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/533/533.jpg",
+			"name": "阿古朵"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/527/527.jpg",
+			"name": "蒙恬"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/524/524.jpg",
+			"name": "蒙犽"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/525/525.jpg",
+			"name": "鲁班大师"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/523/523.jpg",
+			"name": "西施"
+		}
+	]
+},
+{
+	"name": "OMG",
+	"tag": 3,
+	"list": [
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/518/518.jpg",
+			"name": "马超"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/522/522.jpg",
+			"name": "曜"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/506/506.jpg",
+			"name": "云中君"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/505/505.jpg",
+			"name": "瑶"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/515/515.jpg",
+			"name": "嫦娥"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/525/525.jpg",
+			"name": "鲁班大师"
+		}
+	]
+},
+{
+	"name": "EDG",
+	"list": [
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/522/522.jpg",
+			"name": "曜"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/506/506.jpg",
+			"name": "云中君"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/505/505.jpg",
+			"name": "瑶"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/533/533.jpg",
+			"name": "阿古朵"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/527/527.jpg",
+			"name": "蒙恬"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/525/525.jpg",
+			"name": "鲁班大师"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/522/522.jpg",
+			"name": "曜"
+		}
+	]
+},
+{
+	"name": "RNG",
+	"list": [
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/525/525.jpg",
+			"name": "鲁班大师"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg",
+			"name": "夏洛特"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/524/524.jpg",
+			"name": "蒙犽"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/533/533.jpg",
+			"name": "阿古朵"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/527/527.jpg",
+			"name": "蒙恬"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg",
+			"name": "夏洛特"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/506/506.jpg",
+			"name": "云中君"
+		}
+	]
+},
+{
+	"name": "BLG",
+	"list": [
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/523/523.jpg",
+			"name": "西施"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg",
+			"name": "夏洛特"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/506/506.jpg",
+			"name": "云中君"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg",
+			"name": "夏洛特"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/505/505.jpg",
+			"name": "瑶"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/533/533.jpg",
+			"name": "阿古朵"
+		}
+	]
+},
+{
+	"name": "V5",
+	"list": [
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/527/527.jpg",
+			"name": "蒙恬"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/525/525.jpg",
+			"name": "鲁班大师"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/536/536.jpg",
+			"name": "夏洛特"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/533/533.jpg",
+			"name": "阿古朵"
+		},
+		{
+			"image": "https://game.gtimg.cn/images/yxzj/img201606/heroimg/505/505.jpg",
+			"name": "瑶"
+		}
+	]
+}]

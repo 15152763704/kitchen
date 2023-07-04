@@ -1,0 +1,11 @@
+/* #ifndef APP-PLUS-NVUE */
+page {
+    min-height: 100%;
+    height: 100%;
+}
+/* #endif */
+.uni-container {
+	/* flex-direction: column; */
+    /* padding: 15px; */
+    /* background-color: #f8f8f8; */
+}

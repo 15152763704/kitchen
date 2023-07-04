@@ -1,0 +1,653 @@
+<template>
+	<view class="light-container" :style="!isLogin? 'background: #F5F6F7;': ''">
+		<view class="isNot-login" v-if="!isLogin">
+			<!-- <text>你还没有登录</text> -->
+			<!-- <text @click="toLogin()">去登陆</text> -->
+			<image style="width: 682rpx; margin-top: 450rpx;" src="../../../static/toLogin.png" mode="widthFix"></image>
+			<text class="isNot-login-text">您还没有登录，请登陆后查看晒厨艺</text>
+			<text class="actions-login" @click="toLogin()">登录/注册</text>
+		</view>
+		<view class="" v-if="isLogin">
+			<!-- 背景 -->
+			<!-- <image class="bcg" src="../../../static/baskCooking/scy_sy_backgroundImg.png" mode="widthFix"></image> -->
+			<view class="header">
+				<view class="title" style="">
+					<!-- <image @click="toBack()" style="width: 17rpx; height: 30rpx; position: absolute; top: 12rpx; left: 30rpx;" src="../../../static/rmcp_back.png" mode=""></image> -->
+					<text>晒厨艺</text>
+				</view>
+				<view class="search-ct">
+					<image style="width: 64rpx;" src="/static/baskCooking/scy_sy_add.png" mode="widthFix"
+						@click="goVideoForm()"></image>
+					<view class="search">
+						<image class="search-img" src="/static/baskCooking/sy_search.png" mode="widthFix"
+							@click="searchVideoList()"></image>
+						<uni-easyinput :inputBorder="false" class="search-text" placeholder="红烧肉"
+							v-model="queryParams.videoName" @blur="searchVideoList()"></uni-easyinput>
+					</view>
+					<view class="funcIcon">
+						<image @click="toInfo()" style="width: 44rpx; margin-right: 16rpx;"
+							src="/static/baskCooking/scy_sy_info.png" mode="widthFix"></image>
+						<text v-if="unReadNoticeNum>0" class="infoNum"
+							style="">{{unReadNoticeNum > 99 ? unReadNoticeNum+'+':unReadNoticeNum}}</text>
+						<image @click="toMine()" style="width: 46rpx;" src="/static/baskCooking/scy_sy_mine.png"
+							mode="widthFix"></image>
+					</view>
+				</view>
+			</view>
+			<!-- 列表 -->
+			<view class="list">
+				<!-- 用户信息 -->
+				<view class="list-item" v-for="(item,index) in list" :key="index">
+					<view class="userinfo">
+						<image style="width: 60rpx;" :src="item.userUrl?item.userUrl:'/static/danxiaochu.png'"
+							mode="widthFix"></image>
+						<text class="userinfo-name">{{ item.userName }}</text>
+						<text>·</text>
+						<text class="userinfo-time">{{ parseTime(item.createTime,'{y}-{m}-{d}') }}</text>
+					</view>
+					<!-- 视频相关 -->
+					<view class="">
+						<!-- 视频 -->
+						<view class="video-wrap">
+							<video :id="'video' + index" class="video" :show-center-play-btn="false"
+								:poster="item.videoCutImageUrl" :show-progress="true" :src="item.videoUrl"
+								:enable-play-gesture="false" :show-play-btn="true" :show-fullscreen-btn="false"
+								:autoplay="false" :loop="true" :controls="false"
+								@click="gotoVideoPage(item, index)"></video>
+							<cover-view @click="changeVideoState(index)"
+								style="width: 80rpx; height: 60rpx; position: absolute; bottom: 0; right: 0;">
+							</cover-view>
+							<cover-image @click="changeVideoState(index)"
+								style="width: 22rpx; height: 28rpx; position: absolute; bottom: 16rpx; right: 34rpx"
+								:src="item.videoState?'/static/baskCooking/sy_play.png':'/static/baskCooking/sy_play2.png'">
+							</cover-image>
+							<!-- <cover-image @click="changeVideoState(index)" v-else style="width: 16rpx; height: 22rpx; position: absolute; bottom: 16rpx; right: 34rpx" src="/static/baskCooking/sy_play2.png">
+							</cover-image> -->
+						</view>
+						<!-- 广告（视频同款） -->
+						<view class="advertise" v-if="item.linkUrl" @click="goShopInfo(item.linkUrl)">
+							<image style="width: 32rpx; margin-right: 22rpx;" src="/static/baskCooking/sy_gouwuche.png"
+								mode="widthFix"></image>
+							<text class="advertise-text">{{item.linkName}}</text>
+							<text class="advertise-text" style="margin: 0 12rpx;">|</text>
+							<text class="advertise-text">视频同款美食</text>
+						</view>
+					</view>
+					<!-- 相关操作 -->
+					<view class="operation-icon">
+						<image style="width: 40rpx;" src="../../../static/baskCooking/sy_export.png" mode="widthFix"
+							@click="goShare(item)">
+						</image>
+						<view class="" style="flex-direction: row; align-items: center;">
+							<view class="" style="flex-direction: row; align-items: center;">
+								<image v-if="!item.meIsSupport" style="width: 50rpx;"
+									src="../../../static/baskCooking/sy_dianzan.png" mode="widthFix"
+									@click="doSupport(item,index)"></image>
+								<image v-if="item.meIsSupport" style="width: 50rpx;"
+									src="../../../static/baskCooking/sy_dianzan_on.png" mode="widthFix"
+									@click="doCancelSupport(item,index)"></image>
+								<text
+									style="margin-left: 14rpx; font-size: 24rpx; font-weight: 500;">{{item.supportNum}}</text>
+							</view>
+							<view class="" style="flex-direction: row; align-items: center;" @click="toggle(item)">
+								<image style="width: 50rpx; margin-left: 30rpx;"
+									src="../../../static/baskCooking/sy_cmt.png" mode="widthFix"></image>
+								<text
+									style="margin-left: 14rpx; font-size: 24rpx; font-weight: 500;">{{item.evaluationNum}}</text>
+							</view>
+						</view>
+					</view>
+					<!-- 视频配文 -->
+					<view class="caption">
+						<text ref="box" :style="{  lines: textStatus.length != 0?textStatus[index].lines : 0 }"
+							class="caption-text">{{ item.videoDescription }}</text>
+						<view v-if="textStatus.length != 0?textStatus[index].textHeight > 44 : false "
+							class="spread-packup" @click="spread(index)">
+							<text class="spread-packup-text">{{ !textStatus[index].isSpread?'展开':'收起' }}</text>
+							<image style="width: 16rpx;"
+								:src="!textStatus[index].isSpread?'../../../static/baskCooking/sy_zk.png':'../../../static/baskCooking/sy_zka.png'"
+								mode="widthFix">
+							</image>
+						</view>
+					</view>
+					<!-- 评论 -->
+					<view class="comment-list">
+						<view class="comment-item">
+							<text class="item-name">{{ item.evaluationOne }}</text>
+							<!-- <text class="item-cont">{{ val.cont }}</text> -->
+						</view>
+						<view class="comment-item">
+							<text class="item-name">{{ item.evaluationTwo }}</text>
+							<!-- <text class="item-cont">{{ val.cont }}</text> -->
+						</view>
+					</view>
+				</view>
+			</view>
+		</view>
+		<!-- 评论弹出层 -->
+		<!-- <uni-popup ref="alertDialog" type="dialog">
+			<view class="" style="width: 750rpx; height: 800rpx; background-color: #FFFFFF;">
+
+			</view>
+		</uni-popup> -->
+		<!-- 评论弹窗 -->
+		<popup-comment ref="popupComment" />
+	</view>
+</template>
+
+<script>
+	// import MoteLinesDivide from "@/components/mote-lines-divide/mote-lines-divide"
+	import popupComment from './popupComment.vue';
+	import showCooking from '@/api/showCooking/showCooking.js';
+
+	export default {
+		components: {
+			popupComment
+		},
+		data() {
+			return {
+				unReadNoticeNum: 0, //我的未读通知数量
+				isLogin: false,
+				queryParams: {
+					pageSize: 5,
+					pageNum: 1
+				},
+				list: [], //晒厨艺发布视频数据
+				listTotal: null,
+				lines: 0,
+				textHeight: 0,
+				isSpread: false,
+				textStatus: [],
+				// videoState: true
+
+			}
+		},
+		created() {
+
+		},
+		onLoad() {
+			this.initVideoList();
+			this.initUnReadNoticeNum();
+		},
+		methods: {
+			/* 分享 */
+			goShare(item) {
+				uni.share({
+					provider: "weixin",
+					scene: "WXSceneSession",
+					title: item.videoName,
+					imageUrl: item.videoCutImageUrl,
+					type: 4,
+					summary: item.videoDescription,
+					mediaUrl: item.videoUrl,
+					success: function(res) {
+						console.log("success:" + JSON.stringify(res));
+					},
+					fail: function(err) {
+						console.log("fail:" + JSON.stringify(err));
+					}
+				});
+			},
+			/* 跳转到店铺详情 */
+			goShopInfo(id) {
+				uni.navigateTo({
+					url: '/pages/store/store?id=' + id
+				});
+			},
+			/* 初始化查询未读通知数量 */
+			initUnReadNoticeNum() {
+				showCooking.findMyUnReadNoticeCount().then((res) => {
+					if (res.code == 200) {
+						this.unReadNoticeNum = res.data
+					}
+				})
+			},
+			/* 视频取消点赞操作 */
+			doCancelSupport(item, index) {
+				showCooking.cancelSupport({
+					id: item.id
+				}).then((res) => {
+					if (res.code == 200) {
+						this.list[index].meIsSupport = undefined
+						this.list[index].supportNum = this.list[index].supportNum >= 1 ? this.list[index]
+							.supportNum - 1 : 0
+					}
+				})
+			},
+			/* 视频点赞操作 */
+			doSupport(item, index) {
+				showCooking.ShowCookingSupport({
+					showCookingId: item.id,
+					supportedUserId: item.userId
+				}).then((res) => {
+					if (res.code == 200) {
+						this.list[index].meIsSupport = res.data.id
+						this.list[index].supportNum++
+					}
+				})
+			},
+			searchVideoList() {
+				this.queryParams.pageNum = 1;
+				showCooking.listVideo(this.queryParams).then((res) => {
+					this.list = res.rows;
+					this.listTotal = res.total;
+				})
+			},
+			/* 初始化视频列表 */
+			initVideoList() {
+				console.log(this.queryParams)
+				showCooking.listVideo(this.queryParams).then((res) => {
+					console.log(res)
+					this.list = this.list.concat(res.rows);
+					this.listTotal = res.total;
+				})
+			},
+			// toBack() {
+			// 	uni.navigateBack({
+			// 		delta: 1,
+			// 		// animationType: 'slide-out-bottom',
+			// 		// animationDuration: 200
+			// 	});
+			// },
+			toLogin() {
+				uni.navigateTo({
+					url: '/pages/login/login'
+				})
+			},
+			// 评论列表
+			toggle(item) {
+				// 可传参，控制组件popup open
+				this.$refs.popupComment.showPopup(item);
+				// uni.hideTabBar();
+			},
+			// 独取元素高度
+			getStatus() {
+				// #ifdef APP-NVUE
+				const dom = weex.requireModule('dom')
+				// #endif 
+				let _this = this;
+				let textStatus = _this.textStatus;
+
+				for (let i = 0; i < _this.list.length; i++) {
+					// let refname = 'box' + i;
+					// console.log(refname)
+					let obj = {};
+					const result = dom.getComponentRect(_this.$refs.box[i], option => {
+						// console.log('getComponentRect:'+ i, option.size.height)
+						// _this.textHeight = option.size.height;
+						// console.log(_this.textHeight)
+						obj.textHeight = option.size.height;
+						if (option.size.height > 30) {
+							obj.lines = 2;
+							obj.isSpread = false;
+						} else {
+							obj.lines = 0;
+							obj.isSpread = false;
+						}
+						textStatus.push(obj)
+						// console.log(textStatus[i])
+						// if (_this.textHeight > 30) {
+						// 	_this.lines = 2;
+						// }
+					});
+				}
+			},
+			// 配文展开
+			spread(index) {
+				let textStatus = this.textStatus;
+				textStatus[index].isSpread = !textStatus[index].isSpread
+				if (textStatus[index].isSpread) {
+					textStatus[index].lines = 0;
+				} else {
+					textStatus[index].lines = 2
+				}
+			},
+			changeVideoState(index) {
+				// console.log(e)
+				// console.log(index)
+				let videoid = 'video' + index;
+				// console.log(videoid)
+				let video = uni.createVideoContext(videoid, this);
+				// let index = Number(e.currentTarget.id.slice(5));
+				// console.log(Number(e.currentTarget.id.slice(5)));
+				this.list[index].videoState ? video.pause() : video.play();
+				this.list[index].videoState = !this.list[index].videoState;
+			},
+			gotoVideoPage(item, index) {
+				uni.navigateTo({
+					url: '../../videoPage/video-page?pageNum=' + this.queryParams.pageNum + '&index=' + index +
+						'&pageSize=' + this.queryParams.pageSize
+				})
+			},
+			goVideoForm() {
+				uni.navigateTo({
+					url: '/pages/tabBar/light/videoForm'
+				})
+			},
+			toMine() {
+				uni.navigateTo({
+					url: '/pages/tabBar/light/mine/mine'
+				})
+			},
+			toInfo() {
+				uni.navigateTo({
+					url: '/pages/tabBar/light/info/info'
+				})
+			},
+
+
+			parseTime(time, pattern) {
+				if (arguments.length === 0 || !time) {
+					return null
+				}
+				const format = pattern || '{y}-{m}-{d} {h}:{i}:{s}'
+				let date
+				if (typeof time === 'object') {
+					date = time
+				} else {
+					if ((typeof time === 'string') && (/^[0-9]+$/.test(time))) {
+						time = parseInt(time)
+					} else if (typeof time === 'string') {
+						time = time.replace(new RegExp(/-/gm), '/').replace('T', ' ').replace(new RegExp(/\.[\d]{3}/gm),
+							'');
+					}
+			 	if ((typeof time === 'number') && (time.toString().length === 10)) {
+						time = time * 1000
+					}
+					date = new Date(time)
+				}
+				const formatObj = {
+					y: date.getFullYear(),
+					m: date.getMonth() + 1,
+					d: date.getDate(),
+					h: date.getHours(),
+					i: date.getMinutes(),
+					s: date.getSeconds(),
+					a: date.getDay()
+				}
+				const time_str = format.replace(/{(y|m|d|h|i|s|a)+}/g, (result, key) => {
+					let value = formatObj[key]
+					// Note: getDay() returns 0 on Sunday
+					if (key === 'a') {
+						return ['日', '一', '二', '三', '四', '五', '六'][value]
+					}
+					if (result.length > 0 && value < 10) {
+						value = '0' + value
+					}
+					return value || 0
+				})
+				return time_str
+			},
+
+		},
+		mounted() {
+			this.getStatus();
+		},
+		onReady() {
+
+		},
+		onReachBottom() {
+			// console.log('触底啦~')
+			if (this.list.length >= this.listTotal) return;
+			this.queryParams.pageNum++;
+			this.initVideoList();
+		},
+		onHide() {
+			// console.log(111)
+			for (var i = 0; i < this.list.length; i++) {
+				let videoid = 'video' + i;
+				// console.log(videoid)
+				let video = uni.createVideoContext(videoid, this);
+				video.pause();
+			}
+		},
+		onShow() {
+			if (uni.getStorageSync('token_key')) {
+				// console.log('有token')
+				this.isLogin = true;
+				// this.function();
+			}
+		}
+	}
+</script>
+
+<style>
+	.uni-easyinput {
+		width: 400rpx;
+		flex: 0.9;
+	}
+</style>
+<style scoped>
+	/* @import '../../../common/uni-nvue.css'; */
+	.isNot-login {
+		position: relative;
+		display: flex;
+		flex-direction: row;
+		justify-content: center;
+		height: 1200rpx;
+	}
+
+	.isNot-login-text {
+		font-size: 24rpx;
+		color: #A8A8A8;
+		position: absolute;
+		top: 974rpx;
+	}
+
+	.actions-login {
+		font-size: 28rpx;
+		position: absolute;
+		top: 1070rpx;
+		background-image: linear-gradient(to right, #F0C819, #FF9D00);
+		padding: 8rpx 26rpx;
+		border-radius: 10rpx;
+	}
+
+	.light-container {
+		width: 750rpx;
+		/* height: 2000rpx; */
+		background-color: #FFFFFF;
+	}
+
+	.bcg {
+		width: 750rpx;
+		/* height: 308rpx; */
+		position: absolute;
+		left: 0;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		/* z-index: 999 */
+	}
+
+	.header {
+		width: 750rpx;
+		height: 308rpx;
+		font-size: 40rpx;
+		font-weight: 500;
+		position: relative;
+		padding-top: 102rpx;
+		/* box-sizing: border-box; */
+		position: sticky;
+		background-color: #FFFFFF;
+		background-image: linear-gradient(to bottom, #FFBF31, #FEFDFA);
+		/* z-index: 99999; */
+	}
+
+	.title {
+		margin-bottom: 26rpx;
+		flex-direction: row;
+		justify-content: center;
+	}
+
+	.search-ct {
+		width: 750rpx;
+		/* height: 64rpx; */
+		padding: 0 30rpx;
+		/* background-color: #000000; */
+		flex-direction: row;
+		align-items: center;
+		/* justify-content: space-between; */
+	}
+
+	.search {
+		width: 490rpx;
+		height: 64rpx;
+		background-color: #FFFFFF;
+		border-radius: 32rpx;
+		/* box-sizing: border-box; */
+		padding: 12rpx 0;
+		flex-direction: row;
+		align-items: center;
+		margin-right: 20rpx;
+		margin-left: 8rpx;
+	}
+
+	.search-img {
+		width: 28rpx;
+		margin-left: 20rpx;
+		margin-right: 16rpx;
+	}
+
+	.search-text {
+		font-size: 28rpx;
+		color: #808080;
+		border-radius: 32rpx;
+		overflow: hidden;
+	}
+
+	.funcIcon {
+		flex-direction: row;
+		height: 64rpx;
+		align-items: center;
+		position: relative;
+	}
+
+	.infoNum {
+		font-size: 12rpx;
+		color: #FFFFFF;
+		background-color: #FF0000;
+		/* display: block; */
+		position: absolute;
+		top: 4rpx;
+		left: 24rpx;
+		border-radius: 10rpx;
+		padding: 0 4rpx 2rpx;
+		/* box-sizing: border-box; */
+		/* z-index: 99999 */
+	}
+
+	.list {
+		padding: 0 30rpx;
+	}
+
+	.userinfo {
+		flex-direction: row;
+		align-items: center;
+		margin-bottom: 24rpx;
+	}
+
+	.userinfo-name {
+		font-size: 28rpx;
+		font-weight: 500;
+		margin-left: 22rpx;
+		margin-right: 10rpx;
+
+		width: 460rpx;
+		white-space: nowrap;
+		word-break: break-all;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		/* #ifdef APP-PLUS */
+		lines: 1;
+		text-overflow: ellipsis;
+		/* #endif */
+	}
+
+	.userinfo-time {
+		font-size: 20rpx;
+		margin-left: 10rpx;
+	}
+
+	.video-wrap {
+		width: 690rpx;
+		height: 390rpx;
+		position: relative;
+	}
+
+	.video {
+		width: 690rpx;
+		height: 390rpx;
+	}
+
+	.advertise {
+		width: 690rpx;
+		height: 70rpx;
+		flex-direction: row;
+		align-items: center;
+		background-color: #F7F8F9;
+	}
+
+	.advertise-text {
+		margin-top: 4rpx;
+		font-size: 20rpx;
+		font-weight: 500;
+	}
+
+	.operation-icon {
+		margin-top: 28rpx;
+		margin-bottom: 36rpx;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		margin-left: 8rpx;
+		margin-right: 10rpx;
+	}
+
+	.caption {
+		margin-bottom: 64rpx;
+	}
+
+	.caption-text {
+		font-size: 28rpx;
+		/* lines:2; */
+		text-overflow: ellipsis;
+	}
+
+	.spread-packup {
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-end;
+		margin-top: 16rpx;
+	}
+
+	.spread-packup-text {
+		font-size: 24rpx;
+		font-weight: 500;
+		/* line-height: 46rpx; */
+		margin-right: 16rpx;
+
+	}
+
+	.comment-list {
+		background-color: #F9FAFB;
+		padding: 18rpx 20rpx;
+		border-radius: 16rpx;
+		margin-bottom: 24rpx;
+	}
+
+	.comment-item {
+		flex-direction: row;
+		margin-bottom: 8rpx;
+	}
+
+	.item-name {
+		font-size: 28rpx;
+		font-weight: 500;
+	}
+
+	.item-cont {
+		margin-left: 16rpx;
+		font-size: 28rpx;
+	}
+</style>
